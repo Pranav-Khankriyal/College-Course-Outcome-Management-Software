@@ -244,7 +244,7 @@ function SectionTab({ section, department }: { section: any; department: { code:
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.2 }} className="space-y-4">
-      <div className="glass-card rounded-md px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-card rounded-2xl border border-black/5 shadow-sm px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold text-foreground" style={{ letterSpacing: '-0.015em' }}>
             Sec {section.name} <span className="text-muted-foreground font-normal">({section.year})</span>
@@ -254,7 +254,7 @@ function SectionTab({ section, department }: { section: any; department: { code:
         <span className="text-[12px] text-muted-foreground">{section.sectionEnrollments?.length || 0} students enrolled</span>
       </div>
 
-      <div className="glass-card rounded-md">
+      <div className="bg-card rounded-2xl border border-black/5 shadow-sm">
         <div className="px-5 py-3.5 border-b border-border flex items-center gap-2">
           <GraduationCap className="w-4 h-4 text-muted-foreground" />
           <h3 className="text-[13px] font-semibold text-foreground">Students Enrolled</h3>
@@ -343,14 +343,14 @@ function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
           placeholder="Search faculty…"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          className="glass-input w-full pl-9 pr-3.5 py-2 rounded text-sm"
+          className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full pl-9 pr-3.5 py-2 rounded text-sm"
         />
       </div>
 
       <div className="space-y-3">
         {filtered.map((f, i) => (
           <motion.div key={f.user.id} custom={i} variants={cardVariants} initial="hidden" animate="visible"
-            className="glass-card rounded-md">
+            className="bg-card rounded-2xl border border-black/5 shadow-sm">
             <div className="px-5 py-3.5 flex items-center gap-3 border-b border-border">
               <div className="w-8 h-8 rounded flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                 style={{ backgroundColor: 'hsl(210, 80%, 50%)' }}>
@@ -459,7 +459,7 @@ function SubjectsTab({ subjects }: { subjects: SubjectItem[] }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
               {semesterGroups[sem].map((sub, i) => (
                 <motion.div key={sub.id} custom={i} variants={cardVariants} initial="hidden" animate="visible"
-                  className="glass-card rounded-md">
+                  className="bg-card rounded-2xl border border-black/5 shadow-sm">
                   <div className="px-4 py-3 flex items-center justify-between">
                     <div className="min-w-0 flex-1">
                       <p className="text-[13px] font-semibold truncate">{sub.code} — {sub.name}</p>
@@ -529,7 +529,7 @@ function MySubjectsTab({ ownSubjects }: { ownSubjects: OwnSubject[] }) {
       transition={{ duration: 0.2 }} className="space-y-4">
       <h2 className="text-base font-semibold text-foreground">My Teaching Subjects</h2>
       {ownSubjects.length === 0 ? (
-        <div className="glass-card rounded-md p-10 text-center">
+        <div className="bg-card rounded-2xl border border-black/5 shadow-sm p-10 text-center">
           <GraduationCap className="w-8 h-8 text-muted-foreground/20 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">You are not assigned as faculty to any subject.</p>
         </div>
@@ -541,7 +541,7 @@ function MySubjectsTab({ ownSubjects }: { ownSubjects: OwnSubject[] }) {
               <motion.div key={offering.id} custom={i} variants={cardVariants} initial="hidden" animate="visible">
                 <Link
                   href={`/hod/subjects/${offering.id}`}
-                  className="glass-card rounded-md p-4 block group transition-shadow duration-150 hover:shadow-md"
+                  className="bg-card rounded-2xl border border-black/5 shadow-sm p-4 block group transition-shadow duration-150 hover:shadow-md"
                 >
                   <div className="flex items-center gap-2.5 mb-3">
                     <div className="p-1.5 rounded" style={{ backgroundColor: 'hsl(262 80% 55% / 0.1)' }}>
@@ -595,7 +595,7 @@ function HodAddFacultyModal({ onClose }: { onClose: () => void }) {
         initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
         transition={{ duration: 0.15 }}
         onClick={e => e.stopPropagation()}
-        className="glass-card-strong rounded-md p-6 w-full max-w-md"
+        className="bg-card rounded-2xl border border-black/5 shadow-md p-6 w-full max-w-md"
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">Add Faculty</h2>
@@ -607,7 +607,7 @@ function HodAddFacultyModal({ onClose }: { onClose: () => void }) {
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <input type="text" value={name} onChange={e => setName(e.target.value)}
-                placeholder="Full name" className="glass-input w-full pl-9 pr-3.5 py-2.5 rounded text-sm" required />
+                placeholder="Full name" className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full pl-9 pr-3.5 py-2.5 rounded text-sm" required />
             </div>
           </div>
           <div>
@@ -615,7 +615,7 @@ function HodAddFacultyModal({ onClose }: { onClose: () => void }) {
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                placeholder="faculty@bvdu.edu.in" className="glass-input w-full pl-9 pr-3.5 py-2.5 rounded text-sm" required />
+                placeholder="faculty@bvdu.edu.in" className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full pl-9 pr-3.5 py-2.5 rounded text-sm" required />
             </div>
           </div>
           <p className="text-[11px] text-muted-foreground">Default password: <strong className="text-foreground">faculty123</strong></p>
@@ -650,7 +650,7 @@ function HodAddSubjectModal({ semester, onClose }: { semester: number; onClose: 
         initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
         transition={{ duration: 0.15 }}
         onClick={e => e.stopPropagation()}
-        className="glass-card-strong rounded-md p-6 w-full max-w-md"
+        className="bg-card rounded-2xl border border-black/5 shadow-md p-6 w-full max-w-md"
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">Add Subject — Semester {semester}</h2>
@@ -660,12 +660,12 @@ function HodAddSubjectModal({ semester, onClose }: { semester: number; onClose: 
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">Subject Code</label>
             <input type="text" value={code} onChange={e => setCode(e.target.value)}
-              placeholder="e.g. CSBS301" className="glass-input w-full px-3.5 py-2.5 rounded text-sm" required />
+              placeholder="e.g. CSBS301" className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full px-3.5 py-2.5 rounded text-sm" required />
           </div>
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">Subject Name</label>
             <input type="text" value={name} onChange={e => setName(e.target.value)}
-              placeholder="e.g. Operating Systems" className="glass-input w-full px-3.5 py-2.5 rounded text-sm" required />
+              placeholder="e.g. Operating Systems" className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full px-3.5 py-2.5 rounded text-sm" required />
           </div>
           <button type="submit" disabled={loading}
             className="gradient-primary w-full py-2.5 rounded text-[13px] font-semibold flex items-center justify-center gap-2">
@@ -699,7 +699,7 @@ function HodEditSubjectModal({ subject, onClose }: { subject: SubjectItem; onClo
         initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
         transition={{ duration: 0.15 }}
         onClick={e => e.stopPropagation()}
-        className="glass-card-strong rounded-md p-6 w-full max-w-md"
+        className="bg-card rounded-2xl border border-black/5 shadow-md p-6 w-full max-w-md"
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">Edit Subject</h2>
@@ -709,17 +709,17 @@ function HodEditSubjectModal({ subject, onClose }: { subject: SubjectItem; onClo
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">Subject Code</label>
             <input type="text" value={code} onChange={e => setCode(e.target.value)}
-              className="glass-input w-full px-3.5 py-2.5 rounded text-sm" required />
+              className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full px-3.5 py-2.5 rounded text-sm" required />
           </div>
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">Subject Name</label>
             <input type="text" value={name} onChange={e => setName(e.target.value)}
-              className="glass-input w-full px-3.5 py-2.5 rounded text-sm" required />
+              className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full px-3.5 py-2.5 rounded text-sm" required />
           </div>
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">Semester</label>
             <input type="number" min="1" max="8" value={semester} onChange={e => setSemester(parseInt(e.target.value) || 1)}
-              className="glass-input w-full px-3.5 py-2.5 rounded text-sm" required />
+              className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full px-3.5 py-2.5 rounded text-sm" required />
           </div>
           <button type="submit" disabled={loading}
             className="gradient-primary w-full py-2.5 rounded text-[13px] font-semibold flex items-center justify-center gap-2">

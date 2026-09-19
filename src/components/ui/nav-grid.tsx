@@ -46,7 +46,7 @@ export function NavGrid({ title, icon, items, onSelect }: NavGridProps) {
             animate="visible"
             whileTap={{ scale: 0.98 }}
             onClick={() => onSelect(item.value)}
-            className="glass-card rounded-md p-4 text-left group transition-shadow duration-150 hover:shadow-md"
+            className="bg-card rounded-2xl border border-black/5 shadow-sm p-4 text-left group transition-shadow duration-150 hover:shadow-md"
           >
             <h3 className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors duration-150">
               {item.label}

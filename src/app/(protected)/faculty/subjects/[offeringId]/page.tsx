@@ -122,7 +122,7 @@ export default async function SubjectPage(props: { params: Promise<{ offeringId:
             color: hasMarks ? 'hsl(142, 70%, 40%)' : 'hsl(38, 92%, 44%)',
           },
         ].map((stat, i) => (
-          <div key={i} className="glass-card rounded-md p-3.5">
+          <div key={i} className="bg-card rounded-2xl border border-black/5 shadow-sm p-3.5">
             <div className="flex items-center gap-2.5">
               <span style={{ color: stat.color }}>{stat.icon}</span>
               <div>
@@ -140,7 +140,7 @@ export default async function SubjectPage(props: { params: Promise<{ offeringId:
       <ExcelUpload offeringId={offeringId} />
 
       {/* Student Marks Table */}
-      <div className="glass-card rounded-md">
+      <div className="bg-card rounded-2xl border border-black/5 shadow-sm">
         <div className="px-5 py-3.5 border-b border-border flex items-center gap-2">
           <GraduationCap className="w-4 h-4 text-muted-foreground" />
           <h2 className="text-[13px] font-semibold text-foreground">

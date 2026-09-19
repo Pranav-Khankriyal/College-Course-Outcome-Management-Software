@@ -57,7 +57,7 @@ export function FacultyDashboardClient({ assignments }: { assignments: Assignmen
 
             {/* Stats row */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="glass-card rounded-md p-4">
+              <div className="bg-card rounded-2xl border border-black/5 shadow-sm p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded" style={{ backgroundColor: 'hsl(221 83% 53% / 0.1)' }}>
                     <BookOpen className="w-4 h-4" style={{ color: 'hsl(221, 83%, 53%)' }} />
@@ -68,7 +68,7 @@ export function FacultyDashboardClient({ assignments }: { assignments: Assignmen
                   </div>
                 </div>
               </div>
-              <div className="glass-card rounded-md p-4">
+              <div className="bg-card rounded-2xl border border-black/5 shadow-sm p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded" style={{ backgroundColor: 'hsl(142 70% 40% / 0.1)' }}>
                     <GraduationCap className="w-4 h-4" style={{ color: 'hsl(142, 70%, 40%)' }} />
@@ -85,7 +85,7 @@ export function FacultyDashboardClient({ assignments }: { assignments: Assignmen
 
             {/* Subject Cards */}
             {assignments.length === 0 ? (
-              <div className="glass-card rounded-md p-10 text-center">
+              <div className="bg-card rounded-2xl border border-black/5 shadow-sm p-10 text-center">
                 <BookOpen className="w-8 h-8 text-muted-foreground/25 mx-auto mb-3" />
                 <p className="text-sm font-medium text-muted-foreground">No subjects assigned yet.</p>
                 <p className="text-xs text-muted-foreground/60 mt-1">Contact your HOD to get assigned to a subject.</p>
@@ -100,7 +100,7 @@ export function FacultyDashboardClient({ assignments }: { assignments: Assignmen
                     <motion.div key={offering.id} custom={i} variants={cardVariants} initial="hidden" animate="visible">
                       <Link
                         href={`/faculty/subjects/${offering.id}`}
-                        className="glass-card rounded-md p-4 block group relative overflow-hidden transition-shadow duration-200 hover:shadow-md"
+                        className="bg-card rounded-2xl border border-black/5 shadow-sm p-4 block group relative overflow-hidden transition-shadow duration-200 hover:shadow-md"
                       >
                         {/* Status chip */}
                         <div

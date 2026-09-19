@@ -56,7 +56,7 @@ export function UtPerformanceChart({ utPerformance }: { utPerformance: Analytics
             content={({ active, payload, label }) => {
               if (active && payload && payload.length) {
                 return (
-                  <div className="glass-card-strong px-3 py-2 rounded shadow-sm border border-border">
+                  <div className="bg-card rounded-2xl border border-black/5 shadow-md px-3 py-2 rounded shadow-sm border border-border">
                     <p className="text-[12px] font-semibold text-foreground mb-1">{label}</p>
                     {payload.map(p => (
                       <div key={String(p.dataKey)} className="flex items-center gap-2 mt-0.5">

@@ -119,37 +119,6 @@
 
   /* ─── SURFACE SYSTEM ─────────────────────────────────── */
 
-  /* Flat surface panel — clean border, minimal shadow */
-  .glass-card {
-    background-color: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    box-shadow: 0 1px 3px rgba(14, 21, 38, 0.05), 0 1px 2px rgba(14, 21, 38, 0.03);
-  }
-
-  /* Elevated surface panel */
-  .glass-card-strong {
-    background-color: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    box-shadow: 0 4px 6px -1px rgba(14, 21, 38, 0.05), 0 2px 4px -2px rgba(14, 21, 38, 0.03);
-  }
-
-  /* ─── INPUT SYSTEM ───────────────────────────────────── */
-
-  .glass-input {
-    background-color: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    color: hsl(var(--foreground));
-    transition: border-color 150ms ease, box-shadow 150ms ease;
-  }
-  .glass-input::placeholder {
-    color: hsl(var(--muted-foreground));
-    opacity: 0.75;
-  }
-  .glass-input:focus {
-    outline: none;
-    border-color: hsl(var(--primary));
-    box-shadow: 0 0 0 3px hsl(221 83% 53% / 0.12);
-  }
 
   /* ─── ACTION SYSTEM ─────────────────────────────────── */
 

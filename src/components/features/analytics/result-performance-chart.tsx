@@ -48,7 +48,7 @@ export function ResultPerformanceChart({ results }: { results: AnalyticsData['re
                 const d = payload[0].payload
                 if (d.percentage === null) return null
                 return (
-                  <div className="glass-card-strong px-3 py-2 rounded shadow-sm border border-border">
+                  <div className="bg-card rounded-2xl border border-black/5 shadow-md px-3 py-2 rounded shadow-sm border border-border">
                     <p className="text-[12px] font-semibold text-foreground mb-1">{d.name}</p>
                     <p className="text-[11px] text-muted-foreground">
                       Pass Rate: <span className="font-semibold text-foreground">{d.percentage}%</span>

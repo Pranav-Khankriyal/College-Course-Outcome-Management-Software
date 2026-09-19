@@ -151,8 +151,8 @@ function DepartmentsTab({ departments }: { departments: Department[] }) {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.2 }} className="space-y-5">
-      <h2 className="text-base font-semibold text-foreground">All Departments</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <h2 className="text-xl font-bold tracking-tight text-foreground">All Departments</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {departments.map((dept, i) => (
           <motion.div
             key={dept.id}
@@ -161,34 +161,33 @@ function DepartmentsTab({ departments }: { departments: Department[] }) {
             initial="hidden"
             animate="visible"
             onClick={() => router.push(`/admin/departments/${dept.id}`)}
-            className="glass-card rounded-md p-4 cursor-pointer group transition-shadow duration-150 hover:shadow-md"
+            className="bg-card rounded-2xl border border-black/5 shadow-sm p-6 cursor-pointer group transition-all duration-200 hover:shadow-md hover:border-black/10 hover:-translate-y-0.5"
           >
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-[14px] font-bold text-foreground">{dept.code}</h3>
-                <p className="text-[12px] text-muted-foreground mt-0.5">{dept.name}</p>
+                <h3 className="text-lg font-bold tracking-tight text-foreground">{dept.code}</h3>
+                <p className="text-[13px] font-medium text-muted-foreground mt-0.5">{dept.name}</p>
               </div>
-              <div className="px-2 py-0.5 rounded text-[10px] font-semibold"
+              <div className="px-3 py-1 rounded-full text-[11px] font-semibold tracking-wide"
                 style={{ backgroundColor: 'hsl(221 83% 53% / 0.08)', color: 'hsl(221, 83%, 53%)' }}>
                 {dept._count.students} students
               </div>
             </div>
 
-            <div className="flex items-center gap-2 px-2.5 py-2 rounded"
-              style={{ backgroundColor: 'hsl(220, 17%, 95%)' }}>
-              <Shield className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-              <span className="text-[11px] text-muted-foreground">HOD:</span>
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-black/5 bg-secondary/30 mb-4">
+              <Shield className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+              <span className="text-[12px] text-muted-foreground font-medium">HOD:</span>
               {dept.hod ? (
-                <span className="text-[11px] font-semibold text-foreground truncate">{dept.hod.name}</span>
+                <span className="text-[12px] font-bold text-foreground truncate">{dept.hod.name}</span>
               ) : (
-                <span className="text-[11px] text-muted-foreground/50 italic">Not assigned</span>
+                <span className="text-[12px] text-muted-foreground/50 italic">Not assigned</span>
               )}
             </div>
 
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border text-[11px] text-muted-foreground">
-              <span>{dept._count.sections} sections</span>
-              <span>{dept._count.subjects} subjects</span>
-              <ArrowRight className="w-3 h-3 group-hover:text-primary transition-colors duration-150" />
+            <div className="flex items-center justify-between pt-4 border-t border-black/5 text-[12px] font-medium text-muted-foreground">
+              <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5"/> {dept._count.sections} sections</span>
+              <span className="flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5"/> {dept._count.subjects} subjects</span>
+              <ArrowRight className="w-4 h-4 group-hover:text-primary transition-colors duration-200" />
             </div>
           </motion.div>
         ))}
@@ -241,11 +240,11 @@ function UsersTab({ users }: { users: UserItem[] }) {
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.2 }} className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <h2 className="text-base font-semibold text-foreground">Faculty & Users</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
+        <h2 className="text-xl font-bold tracking-tight text-foreground">Faculty & Users</h2>
         <button
           onClick={() => setShowAddModal(true)}
-          className="gradient-primary px-3.5 py-2 rounded text-[13px] font-semibold flex items-center gap-1.5"
+          className="bg-foreground text-background hover:bg-foreground/90 px-4 py-2 rounded-xl text-[13px] font-medium transition-colors duration-200 flex items-center gap-1.5 shadow-sm"
         >
           <UserPlus className="w-3.5 h-3.5" />
           Add User
@@ -253,50 +252,40 @@ function UsersTab({ users }: { users: UserItem[] }) {
       </div>
 
       {/* Category + Search */}
-      <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
-        <div className="flex border border-border rounded overflow-hidden">
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <div className="flex p-1 bg-black/5 rounded-xl">
           {(['ADMIN', 'HOD', 'FACULTY'] as const).map(role => (
             <button
               key={role}
               onClick={() => setActiveCategory(role)}
-              className="px-4 py-2 text-[12px] font-semibold transition-colors duration-150"
-              style={activeCategory === role
-                ? { backgroundColor: 'hsl(221, 83%, 53%)', color: 'white' }
-                : { backgroundColor: 'transparent', color: 'hsl(220, 12%, 50%)' }
-              }
-              onMouseEnter={e => {
-                if (activeCategory !== role)
-                  (e.currentTarget as HTMLElement).style.backgroundColor = 'hsl(220, 17%, 94%)'
-              }}
-              onMouseLeave={e => {
-                if (activeCategory !== role)
-                  (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-              }}
+              className={`px-4 py-1.5 text-[12px] font-medium rounded-lg transition-all duration-200 ${
+                activeCategory === role ? 'bg-white text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-black/5'
+              }`}
             >
               {role === 'ADMIN' ? 'Admins' : role === 'HOD' ? 'HODs' : 'Faculty'}
             </button>
           ))}
         </div>
-        <div className="relative w-full md:w-60">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+        <div className="relative w-full md:w-64">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search…"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="glass-input w-full pl-9 pr-3.5 py-2 rounded text-sm"
+            className="w-full pl-10 pr-4 py-2 bg-card border border-black/5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
           />
         </div>
       </div>
 
       {/* Users Table */}
-      <div className="glass-card rounded-md overflow-hidden">
+      <div className="bg-card rounded-2xl border border-black/5 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr style={{ borderBottom: '1px solid hsl(220, 14%, 87%)' }}>
-                <th className="text-left text-[11px] font-semibold text-muted-foreground px-4 py-2.5 uppercase tracking-wider">Name</th>
-                <th className="text-left text-[11px] font-semibold text-muted-foreground px-4 py-2.5 uppercase tracking-wider">Email</th>
+              <tr className="border-b border-black/5 bg-secondary/30">
+                <th className="text-left text-[11px] font-semibold text-muted-foreground px-5 py-3 uppercase tracking-wider">Name</th>
+                <th className="text-left text-[11px] font-semibold text-muted-foreground px-5 py-3 uppercase tracking-wider">Email</th>
                 {activeCategory !== 'ADMIN' && (
                   <th className="text-left text-[11px] font-semibold text-muted-foreground px-4 py-2.5 uppercase tracking-wider">Assignments</th>
                 )}
@@ -458,12 +447,12 @@ function SubjectsTab({ departments }: { departments: Department[] }) {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.2 }} className="space-y-5">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <h2 className="text-base font-semibold text-foreground">Subject Management</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
+        <h2 className="text-xl font-bold tracking-tight text-foreground">Subject Management</h2>
         <select
           value={selectedDept}
           onChange={e => setSelectedDept(e.target.value)}
-          className="glass-input px-3.5 py-2 rounded text-sm"
+          className="px-4 py-2 bg-card border border-black/5 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20 shadow-sm"
         >
           {departments.map(d => (
             <option key={d.id} value={d.id}>{d.code} — {d.name}</option>
@@ -475,19 +464,15 @@ function SubjectsTab({ departments }: { departments: Department[] }) {
         <div className="space-y-5">
           {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
             <div key={sem}>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
-                  style={{ borderLeft: '2px solid hsl(142, 70%, 40%)', paddingLeft: '0.5rem' }}>
+              <div className="flex items-center justify-between mb-3 border-b border-black/5 pb-2">
+                <h3 className="text-[12px] font-bold text-foreground uppercase tracking-wider text-muted-foreground">
                   Semester {sem}
                 </h3>
                 <button
                   onClick={() => setAddSubjectSem(sem)}
-                  className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded transition-colors duration-150"
-                  style={{ backgroundColor: 'hsl(142 70% 40% / 0.08)', color: 'hsl(142, 70%, 40%)' }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = 'hsl(142 70% 40% / 0.14)'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = 'hsl(142 70% 40% / 0.08)'}
+                  className="bg-black/5 text-foreground hover:bg-black/10 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors duration-200 flex items-center gap-1.5"
                 >
-                  <Plus className="w-3 h-3" /> Add Subject
+                  <Plus className="w-3.5 h-3.5" /> Add Subject
                 </button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
@@ -498,7 +483,7 @@ function SubjectsTab({ departments }: { departments: Department[] }) {
                     variants={cardVariants}
                     initial="hidden"
                     animate="visible"
-                    className="glass-card rounded-md p-3.5 flex items-center justify-between group"
+                    className="bg-card rounded-xl border border-black/5 shadow-sm p-4 flex items-center justify-between group transition-shadow duration-200 hover:shadow-md"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="p-1.5 rounded flex-shrink-0" style={{ backgroundColor: 'hsl(142 70% 40% / 0.08)' }}>
@@ -572,7 +557,7 @@ function AddSubjectModal({ departmentId, semester, onClose }: { departmentId: st
         initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
         transition={{ duration: 0.15 }}
         onClick={e => e.stopPropagation()}
-        className="glass-card-strong rounded-md p-6 w-full max-w-md"
+        className="bg-card rounded-2xl border border-black/5 shadow-md p-6 w-full max-w-md"
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">Add Subject — Semester {semester}</h2>
@@ -582,12 +567,12 @@ function AddSubjectModal({ departmentId, semester, onClose }: { departmentId: st
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">Subject Code</label>
             <input type="text" value={code} onChange={e => setCode(e.target.value)}
-              placeholder="e.g. CSBS301" className="glass-input w-full px-3.5 py-2.5 rounded text-sm" required />
+              placeholder="e.g. CSBS301" className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full px-3.5 py-2.5 rounded text-sm" required />
           </div>
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">Subject Name</label>
             <input type="text" value={name} onChange={e => setName(e.target.value)}
-              placeholder="e.g. Operating Systems" className="glass-input w-full px-3.5 py-2.5 rounded text-sm" required />
+              placeholder="e.g. Operating Systems" className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full px-3.5 py-2.5 rounded text-sm" required />
           </div>
           <button type="submit" disabled={loading}
             className="gradient-primary w-full py-2.5 rounded text-[13px] font-semibold flex items-center justify-center gap-2">
@@ -624,7 +609,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
         initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
         transition={{ duration: 0.15 }}
         onClick={e => e.stopPropagation()}
-        className="glass-card-strong rounded-md p-6 w-full max-w-md"
+        className="bg-card rounded-2xl border border-black/5 shadow-md p-6 w-full max-w-md"
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">Add New User</h2>
@@ -636,7 +621,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <input type="text" value={name} onChange={e => setName(e.target.value)}
-                placeholder="Full name" className="glass-input w-full pl-9 pr-3.5 py-2.5 rounded text-sm" required />
+                placeholder="Full name" className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full pl-9 pr-3.5 py-2.5 rounded text-sm" required />
             </div>
           </div>
           <div>
@@ -644,7 +629,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                placeholder="user@bvdu.edu.in" className="glass-input w-full pl-9 pr-3.5 py-2.5 rounded text-sm" required />
+                placeholder="user@bvdu.edu.in" className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full pl-9 pr-3.5 py-2.5 rounded text-sm" required />
             </div>
           </div>
           <div>
@@ -652,7 +637,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
             <div className="relative">
               <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <input type={showPwd ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
-                placeholder="Enter password" className="glass-input w-full pl-9 pr-10 py-2.5 rounded text-sm" required />
+                placeholder="Enter password" className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full pl-9 pr-10 py-2.5 rounded text-sm" required />
               <button type="button" onClick={() => setShowPwd(!showPwd)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                 {showPwd ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -662,7 +647,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">Role</label>
             <select value={role} onChange={e => setRole(e.target.value as 'ADMIN' | 'HOD' | 'FACULTY')}
-              className="glass-input w-full px-3.5 py-2.5 rounded text-sm">
+              className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full px-3.5 py-2.5 rounded text-sm">
               <option value="FACULTY">Faculty</option>
               <option value="HOD">HOD</option>
               <option value="ADMIN">Admin</option>
@@ -700,7 +685,7 @@ function EditUserModal({ user, onClose }: { user: UserItem; onClose: () => void 
         initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
         transition={{ duration: 0.15 }}
         onClick={e => e.stopPropagation()}
-        className="glass-card-strong rounded-md p-6 w-full max-w-md"
+        className="bg-card rounded-2xl border border-black/5 shadow-md p-6 w-full max-w-md"
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">Edit User</h2>
@@ -710,17 +695,17 @@ function EditUserModal({ user, onClose }: { user: UserItem; onClose: () => void 
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">Name</label>
             <input type="text" value={name} onChange={e => setName(e.target.value)}
-              className="glass-input w-full px-3.5 py-2.5 rounded text-sm" required />
+              className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full px-3.5 py-2.5 rounded text-sm" required />
           </div>
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">Email</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-              className="glass-input w-full px-3.5 py-2.5 rounded text-sm" required />
+              className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full px-3.5 py-2.5 rounded text-sm" required />
           </div>
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">Role</label>
             <select value={role} onChange={e => setRole(e.target.value)}
-              className="glass-input w-full px-3.5 py-2.5 rounded text-sm">
+              className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full px-3.5 py-2.5 rounded text-sm">
               <option value="FACULTY">Faculty</option>
               <option value="HOD">HOD</option>
               <option value="ADMIN">Admin</option>
@@ -758,7 +743,7 @@ function ResetPasswordModal({ user, onClose }: { user: UserItem; onClose: () => 
         initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
         transition={{ duration: 0.15 }}
         onClick={e => e.stopPropagation()}
-        className="glass-card-strong rounded-md p-6 w-full max-w-md"
+        className="bg-card rounded-2xl border border-black/5 shadow-md p-6 w-full max-w-md"
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-[15px] font-semibold">Reset Password</h2>
@@ -771,7 +756,7 @@ function ResetPasswordModal({ user, onClose }: { user: UserItem; onClose: () => 
           <div className="relative">
             <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <input type={showPwd ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)}
-              placeholder="New password" className="glass-input w-full pl-9 pr-10 py-2.5 rounded text-sm" required />
+              placeholder="New password" className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full pl-9 pr-10 py-2.5 rounded text-sm" required />
             <button type="button" onClick={() => setShowPwd(!showPwd)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
               {showPwd ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}

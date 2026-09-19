@@ -241,7 +241,7 @@ export function ExcelUpload({ offeringId }: { offeringId: string }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(14, 21, 38, 0.45)', backdropFilter: 'blur(4px)' }}>
           <motion.div
             initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-            className="glass-card-strong rounded-md p-6 w-full max-w-md shadow-lg"
+            className="bg-card rounded-2xl border border-black/5 shadow-md p-6 w-full max-w-md shadow-lg"
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'hsl(35, 92%, 53%, 0.15)' }}>

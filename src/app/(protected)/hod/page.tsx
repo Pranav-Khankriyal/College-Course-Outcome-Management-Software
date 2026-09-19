@@ -47,7 +47,7 @@ export default async function HodDashboard(props: {
   if (!data) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="glass-card-strong rounded-2xl p-8 text-center max-w-md">
+        <div className="bg-card rounded-2xl border border-black/5 shadow-md rounded-2xl p-8 text-center max-w-md">
           <h1 className="text-xl font-bold mb-2">No Department Assigned</h1>
           <p className="text-sm text-muted-foreground">
             You have not been assigned as HOD to any department yet. Please contact the administrator.

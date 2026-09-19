@@ -152,7 +152,7 @@ function SectionTab({ section, department }: { section: any; department: any }) 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.2 }} className="space-y-4">
-      <div className="glass-card rounded-md px-5 py-3.5 flex items-center justify-between">
+      <div className="bg-card rounded-2xl border border-black/5 shadow-sm px-5 py-3.5 flex items-center justify-between">
         <div>
           <h2 className="text-base font-semibold text-foreground">
             Sec {section.name} <span className="text-muted-foreground font-normal">({section.year})</span>
@@ -162,7 +162,7 @@ function SectionTab({ section, department }: { section: any; department: any }) 
         <span className="text-[12px] text-muted-foreground">{section.sectionEnrollments?.length || 0} students</span>
       </div>
 
-      <div className="glass-card rounded-md">
+      <div className="bg-card rounded-2xl border border-black/5 shadow-sm">
         <div className="px-5 py-3.5 border-b border-border flex items-center gap-2">
           <GraduationCap className="w-4 h-4 text-muted-foreground" />
           <h3 className="text-[13px] font-semibold text-foreground">Enrolled Students</h3>
@@ -223,14 +223,14 @@ function FacultyTab({ faculty }: { faculty: any[] }) {
           placeholder="Search faculty…"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          className="glass-input w-full pl-9 pr-3.5 py-2 rounded text-sm"
+          className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full pl-9 pr-3.5 py-2 rounded text-sm"
         />
       </div>
 
       <div className="space-y-3">
         {filtered.map((f, i) => (
           <motion.div key={f.user.id} custom={i} variants={cardVariants} initial="hidden" animate="visible"
-            className="glass-card rounded-md">
+            className="bg-card rounded-2xl border border-black/5 shadow-sm">
             <div className="px-5 py-3.5 flex items-center gap-3 border-b border-border">
               <div className="w-8 h-8 rounded flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
                 style={{ backgroundColor: 'hsl(210, 80%, 50%)' }}>
@@ -298,7 +298,7 @@ function SubjectsTab({ subjects }: { subjects: any[] }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
               {semesterGroups[sem].map((sub, i) => (
                 <motion.div key={sub.id} custom={i} variants={cardVariants} initial="hidden" animate="visible"
-                  className="glass-card rounded-md p-3.5">
+                  className="bg-card rounded-2xl border border-black/5 shadow-sm p-3.5">
                   <div className="flex items-center gap-2.5 mb-2">
                     <div className="p-1.5 rounded flex-shrink-0" style={{ backgroundColor: 'hsl(142 70% 40% / 0.08)' }}>
                       <BookOpen className="w-3.5 h-3.5" style={{ color: 'hsl(142, 70%, 40%)' }} />
