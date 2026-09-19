@@ -4,7 +4,7 @@ import { ArrowLeft, BookOpen, GraduationCap, Layers, BarChart3 } from 'lucide-re
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-export default async function SubjectPage(props: { params: Promise<{ offeringId: string }> }) {
+export default async function HodSubjectPage(props: { params: Promise<{ offeringId: string }> }) {
   const params = await props.params;
   const offeringId = params.offeringId;
 
@@ -82,10 +82,9 @@ export default async function SubjectPage(props: { params: Promise<{ offeringId:
       {/* Back + Header */}
       <div className="flex items-center gap-3">
         <Link
-          href="/faculty"
+          href="/hod"
           className="p-1.5 rounded transition-colors duration-150"
           style={{ backgroundColor: 'hsl(220, 17%, 91%)' }}
-          onMouseEnter={undefined}
         >
           <ArrowLeft className="w-4 h-4 text-muted-foreground" />
         </Link>

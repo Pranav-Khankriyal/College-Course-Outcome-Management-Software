@@ -44,12 +44,12 @@ function getNavItems(role: string, onNavigate?: (key: string) => void): NavItem[
 // Sidebar colour tokens
 const clr = {
   bg:         'hsl(0, 0%, 100%)', // White background
-  border:     'hsl(220, 14%, 87%)', // Light border
+  border:     'rgba(0, 0, 0, 0.06)', // Light border
   fg:         'hsl(222, 47%, 11%)', // Dark foreground
   fgDim:      'hsl(220, 14%, 46%)', // Muted foreground
   activeText: 'hsl(221, 83%, 53%)', // Primary blue
-  activeBg:   'hsl(221, 83%, 53%, 0.08)', // Light blue background
-  hoverBg:    'hsl(220, 14%, 96%)', // Very light gray hover
+  activeBg:   'hsl(221, 83%, 53%, 0.12)', // Light blue background
+  hoverBg:    'rgba(0, 0, 0, 0.04)', // Very light gray hover
 }
 
 const rolePill: Record<string, React.CSSProperties> = {
@@ -93,10 +93,10 @@ export function Sidebar({
       alignItems:     'center',
       gap:            collapsed ? 0 : '0.625rem',
       justifyContent: collapsed ? 'center' : 'space-between',
-      padding:        collapsed ? '0.5rem' : '0.4375rem 0.625rem',
-      borderRadius:   '4px',
+      padding:        collapsed ? '0.5rem' : '0.5rem 0.75rem',
+      borderRadius:   '10px',
       fontSize:       '0.8125rem',
-      fontWeight:     500,
+      fontWeight:     isActive ? 600 : 500,
       transition:     'background-color 120ms ease, color 120ms ease',
       cursor:         'pointer',
       width:          '100%',
@@ -104,8 +104,6 @@ export function Sidebar({
       border:         'none',
       background:     'none',
       color:          isActive ? clr.activeText : clr.fg,
-      borderLeft:     isActive ? `2px solid hsl(221, 83%, 53%)` : '2px solid transparent',
-      paddingLeft:    isActive && !collapsed ? 'calc(0.625rem - 2px)' : undefined,
       ...(isActive ? { backgroundColor: clr.activeBg } : {}),
     }
 
@@ -167,10 +165,10 @@ export function Sidebar({
       display:        'flex',
       alignItems:     'center',
       justifyContent: 'space-between',
-      padding:        '0.375rem 0.5rem',
-      borderRadius:   '3px',
+      padding:        '0.4375rem 0.625rem',
+      borderRadius:   '8px',
       fontSize:       '0.75rem',
-      fontWeight:     500,
+      fontWeight:     isActive ? 600 : 500,
       transition:     'background-color 120ms ease, color 120ms ease',
       cursor:         'pointer',
       width:          '100%',
@@ -258,11 +256,11 @@ export function Sidebar({
 
       {/* ── Brand / User ─────────────────────────────────────── */}
       <div style={{
-        padding:       collapsed ? '0.875rem 0.5rem 0.625rem' : '0.875rem 1rem 0.625rem',
+        padding:       collapsed ? '1rem 0.5rem 0.75rem' : '1rem 1.25rem 0.75rem',
         borderBottom:  `1px solid ${clr.border}`,
         display:       'flex',
         alignItems:    'center',
-        gap:           '0.75rem',
+        gap:           '0.875rem',
         overflow:      'hidden',
       }}>
         <div style={{ flexShrink: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -334,7 +332,7 @@ export function Sidebar({
       {/* ── Navigation ───────────────────────────────────────── */}
       <nav style={{
         flex:          1,
-        padding:       '0.5rem 0.375rem',
+        padding:       '0.75rem 0.75rem',
         overflowY:     'auto',
         display:       'flex',
         flexDirection: 'column',
@@ -347,7 +345,7 @@ export function Sidebar({
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
             color:         clr.fgDim,
-            padding:       '0 0.375rem',
+            padding:       '0 0.5rem',
             marginBottom:  '0.375rem',
             marginTop:     '0.125rem',
           }}>

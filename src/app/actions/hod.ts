@@ -115,19 +115,21 @@ export async function getHodDepartmentSemesterDetails(semester: number) {
 
 // ---- Sections with Details ----
 
-export async function getHodSections() {
+export async function getHodSections(contextId?: string | null) {
   const { department } = await getHodDepartment()
 
   const sections = await db.section.findMany({
     where: { departmentId: department.id },
     include: {
       sectionEnrollments: {
+        where: contextId ? { academicContextId: contextId } : undefined,
         include: {
           student: { select: { id: true, name: true, prn: true } },
           academicContext: { select: { academicYear: true, semester: true } }
         }
       },
       courseOfferings: {
+        where: contextId ? { academicContextId: contextId } : undefined,
         include: {
           subject: { select: { id: true, name: true, code: true } },
           academicContext: { select: { academicYear: true, semester: true } },

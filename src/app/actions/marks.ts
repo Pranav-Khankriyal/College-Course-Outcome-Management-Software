@@ -136,16 +136,15 @@ export async function updateMark(markId: string, marksObtained: number | null) {
 
 export async function importMarksFromExcel(
   courseOfferingId: string,
-  studentsData: {
-    name: string
-    rollNumber: string
-    co1: number
-    co2: number
-    co3: number
-    co4: number
-    co5: number
-    co6: number
-  }[]
+  payload: {
+    assessmentName: string;
+    questions: { col: number; coCode: string; questionName: string; maxMarks: number }[];
+    students: {
+      name: string;
+      rollNumber: string;
+      marks: { questionName: string; coCode: string; maxMarks: number; obtained: number }[];
+    }[];
+  }
 ) {
   const session = await requireFacultyOrHod()
   const userId = (session.user as { id: string }).id
@@ -165,72 +164,69 @@ export async function importMarksFromExcel(
   })
   if (!offering) throw new Error('Course offering not found')
 
-  // Ensure COs exist
-  const coConfigs = [
-    { code: 'CO1', maxMarks: 6 },
-    { code: 'CO2', maxMarks: 6 },
-    { code: 'CO3', maxMarks: 7 },
-    { code: 'CO4', maxMarks: 6 },
-    { code: 'CO5', maxMarks: 6 },
-    { code: 'CO6', maxMarks: 7 },
-  ]
-
-  // Create or get COs
+  // Ensure COs exist based on the template
   const coMap: Record<string, string> = {}
-  for (const co of coConfigs) {
-    const existing = await db.courseOutcome.findFirst({
-      where: { courseOfferingId, code: co.code }
-    })
-    if (existing) {
-      coMap[co.code] = existing.id
-    } else {
-      const created = await db.courseOutcome.create({
-        data: { courseOfferingId, code: co.code, description: `${co.code} Outcome` }
+  for (const q of payload.questions) {
+    if (!coMap[q.coCode]) {
+      let existing = await db.courseOutcome.findFirst({
+        where: { courseOfferingId, code: q.coCode }
       })
-      coMap[co.code] = created.id
+      if (!existing) {
+        existing = await db.courseOutcome.create({
+          data: { courseOfferingId, code: q.coCode, description: `${q.coCode} Outcome` }
+        })
+      }
+      coMap[q.coCode] = existing.id
     }
   }
 
-  // Create or get Assessment
+  // Create or get Assessment based on parsed name
+  const assessmentName = payload.assessmentName || 'Internal Assessment'
   let assessment = await db.assessment.findFirst({
-    where: { courseOfferingId, name: 'Internal Assessment' }
+    where: { courseOfferingId, name: assessmentName }
   })
   if (!assessment) {
     assessment = await db.assessment.create({
-      data: { courseOfferingId, name: 'Internal Assessment' }
+      data: { courseOfferingId, name: assessmentName }
     })
   }
 
-  // Create or get AssessmentQuestions for each CO
-  const questionMap: Record<string, string> = {}
-  for (let i = 0; i < coConfigs.length; i++) {
-    const co = coConfigs[i]
+  // Create or get AssessmentQuestions dynamically
+  const questionMap: Record<string, string> = {} // Keyed by questionName
+  for (let i = 0; i < payload.questions.length; i++) {
+    const q = payload.questions[i]
     let question = await db.assessmentQuestion.findFirst({
       where: {
         assessmentId: assessment.id,
-        courseOutcomeId: coMap[co.code],
+        courseOutcomeId: coMap[q.coCode],
       }
     })
     if (!question) {
       question = await db.assessmentQuestion.create({
         data: {
           assessmentId: assessment.id,
-          courseOutcomeId: coMap[co.code],
-          questionNumber: i + 1,
-          maxMarks: co.maxMarks,
+          courseOutcomeId: coMap[q.coCode],
+          questionNumber: i + 1, // Using sequence as number
+          maxMarks: q.maxMarks,
         }
       })
+    } else if (question.maxMarks !== q.maxMarks) {
+      // Update max marks if changed in template
+      await db.assessmentQuestion.update({
+        where: { id: question.id },
+        data: { maxMarks: q.maxMarks }
+      })
     }
-    questionMap[co.code] = question.id
+    questionMap[q.questionName] = question.id
   }
 
   // Process each student
   let processedCount = 0
-  for (const row of studentsData) {
+  for (const row of payload.students) {
     // Create or find student
     const student = await db.student.upsert({
       where: { prn: row.rollNumber },
-      update: { name: row.name },
+      update: {}, // Don't overwrite name if it's a dummy from the template
       create: {
         prn: row.rollNumber,
         name: row.name,
@@ -256,25 +252,23 @@ export async function importMarksFromExcel(
       }
     })
 
-    // Create/update marks for each CO
-    const coValues: Record<string, number> = {
-      CO1: row.co1, CO2: row.co2, CO3: row.co3,
-      CO4: row.co4, CO5: row.co5, CO6: row.co6,
-    }
-
-    for (const [code, value] of Object.entries(coValues)) {
+    // Create/update marks for each question mapping
+    for (const mark of row.marks) {
+      const qId = questionMap[mark.questionName];
+      if (!qId) continue;
+      
       await db.studentMark.upsert({
         where: {
           studentId_assessmentQuestionId: {
             studentId: student.id,
-            assessmentQuestionId: questionMap[code],
+            assessmentQuestionId: qId,
           }
         },
-        update: { marksObtained: value, isAbsent: false },
+        update: { marksObtained: mark.obtained, isAbsent: false },
         create: {
           studentId: student.id,
-          assessmentQuestionId: questionMap[code],
-          marksObtained: value,
+          assessmentQuestionId: qId,
+          marksObtained: mark.obtained,
           isAbsent: false,
         }
       })

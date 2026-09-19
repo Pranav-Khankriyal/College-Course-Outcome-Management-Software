@@ -3,11 +3,14 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Users, BookOpen, GraduationCap, Search, LayoutDashboard, Building2
+  Users, BookOpen, User, Plus, Trash2, Check, LayoutDashboard, Edit3, Mail, Building2, ExternalLink, ArrowRight, Save, X, Settings2, Trash, Upload, ChevronDown, GraduationCap, Search
 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
+import { DepartmentDashboard } from '@/components/features/analytics/department-dashboard'
+import { CustomSelect } from '@/components/ui/custom-select'
+import { AnalyticsData } from '@/app/actions/analytics'
 
 const cardVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -18,7 +21,7 @@ const cardVariants = {
 }
 
 export function AdminDepartmentClient({
-  overview, sections, faculty, subjects, academicContexts, activeContextId
+  overview, sections, faculty, subjects, academicContexts, activeContextId, analytics
 }: {
   overview: any
   sections: Record<string, any[]>
@@ -26,14 +29,15 @@ export function AdminDepartmentClient({
   subjects: any[]
   academicContexts: any[]
   activeContextId: string | null
+  analytics: AnalyticsData
 }) {
   const [activeTab, setActiveTab] = useState<string>('dashboard')
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const handleContextChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleContextChange = (val: string) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (e.target.value) params.set('context', e.target.value)
+    if (val) params.set('context', val)
     else params.delete('context')
     router.push(`?${params.toString()}`)
   }
@@ -101,26 +105,34 @@ export function AdminDepartmentClient({
         ]} />
 
         {/* Context selector bar */}
-        <div className="bg-card border-b border-border px-4 py-2 flex items-center justify-between">
-          <span className="text-[12px] font-medium text-muted-foreground flex items-center gap-1.5">
-            <Building2 className="w-3.5 h-3.5" />
+        <div className="bg-card border-b border-black/5 px-5 py-1.5 flex items-center justify-between sticky top-11 z-40">
+          <span className="text-[13px] font-semibold text-foreground flex items-center gap-1.5 tracking-tight">
+            <div className="p-1 bg-primary/10 rounded text-primary">
+              <Building2 className="w-3.5 h-3.5" />
+            </div>
             {overview.department.name}
           </span>
-          <select
+          <CustomSelect
             value={activeContextId || ''}
             onChange={handleContextChange}
-            className="glass-input text-sm px-2.5 py-1 rounded"
-          >
-            {academicContexts.map((c: any) => (
-              <option key={c.id} value={c.id}>{c.academicYear} — {c.semester}</option>
-            ))}
-          </select>
+            options={academicContexts.map((c: any) => ({
+              value: c.id,
+              label: `${c.academicYear} / ${c.semester.replace(' Semester', '')}`
+            }))}
+          />
         </div>
 
         <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto w-full">
           <AnimatePresence mode="wait">
             {activeTab === 'dashboard' && (
-              <DashboardTab key="dashboard" overview={overview} activeContextId={activeContextId} academicContexts={academicContexts} />
+              <DepartmentDashboard 
+                key="dashboard" 
+                data={analytics} 
+                title={overview.department.name} 
+                subtitle={`Head of Department: ${overview.hodName} | Academic Context: ${
+                  academicContexts.find(c => c.id === activeContextId)?.academicYear || 'All'
+                }`} 
+              />
             )}
             {activeTab.startsWith('section-') && activeSection && (
               <SectionTab key={activeTab} section={activeSection} department={overview.department} />
@@ -134,49 +146,7 @@ export function AdminDepartmentClient({
   )
 }
 
-function DashboardTab({ overview, activeContextId, academicContexts }: {
-  overview: any; activeContextId: string | null; academicContexts: any[]
-}) {
-  const { department, stats, hodName } = overview
-  const context = academicContexts.find((c: any) => c.id === activeContextId) || academicContexts[0]
-
-  const statItems = [
-    { value: stats.studentCount, label: 'Students' },
-    { value: stats.facultyCount, label: 'Faculty' },
-    { value: stats.sectionCount, label: 'Sections' },
-    { value: stats.subjectCount, label: 'Subjects' },
-  ]
-
-  return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.2 }} className="space-y-5">
-      <div className="glass-card rounded-md">
-        <div className="px-5 py-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-semibold text-foreground" style={{ letterSpacing: '-0.015em' }}>
-              {department.name}
-            </h2>
-            <p className="text-[12px] text-muted-foreground mt-0.5">
-              Head of Department: <span className="font-medium text-foreground">{hodName}</span>
-            </p>
-          </div>
-          <div className="text-left sm:text-right">
-            <p className="text-[13px] font-semibold text-foreground">{context?.academicYear}</p>
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">{context?.semester}</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
-          {statItems.map((stat, i) => (
-            <div key={i} className="px-5 py-4">
-              <p className="text-2xl font-bold text-foreground leading-none">{stat.value}</p>
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium mt-1.5">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  )
-}
+// Component DashboardTab was replaced by DepartmentDashboard
 
 function SectionTab({ section, department }: { section: any; department: any }) {
   return (
@@ -304,6 +274,9 @@ function FacultyTab({ faculty }: { faculty: any[] }) {
 
 function SubjectsTab({ subjects }: { subjects: any[] }) {
   const semesters = [1, 2, 3, 4, 5, 6, 7, 8]
+  const allYears = subjects.flatMap(s => s.courseOfferings.map((o: any) => o.academicContext.academicYear))
+  const latestYear = allYears.length > 0 ? allYears.sort().reverse()[0] : ''
+
   const semesterGroups: Record<number, typeof subjects> = {
     1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: []
   }
@@ -332,14 +305,14 @@ function SubjectsTab({ subjects }: { subjects: any[] }) {
                     </div>
                     <div className="min-w-0">
                       <p className="text-[12px] font-semibold truncate">{sub.code} — {sub.name}</p>
-                      <p className="text-[11px] text-muted-foreground">{sub.courseOfferings.length} offering{sub.courseOfferings.length !== 1 ? 's' : ''}</p>
+                      <p className="text-[11px] text-muted-foreground">{sub.courseOfferings.filter((o: any) => o.academicContext.academicYear === latestYear).length} offering{sub.courseOfferings.filter((o: any) => o.academicContext.academicYear === latestYear).length !== 1 ? 's' : ''}</p>
                     </div>
                   </div>
-                  {sub.courseOfferings.length > 0 && (
+                  {sub.courseOfferings.filter((o: any) => o.academicContext.academicYear === latestYear).length > 0 && (
                     <div className="space-y-1.5 pt-2 border-t border-border">
-                      {sub.courseOfferings.map((o: any) => (
+                      {sub.courseOfferings.filter((o: any) => o.academicContext.academicYear === latestYear).map((o: any) => (
                         <div key={o.id} className="flex items-center justify-between text-[11px]">
-                          <span className="text-muted-foreground">
+                          <span className="text-muted-foreground font-medium">
                             {o.section.year} Sec {o.section.name}
                           </span>
                           <div>

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { notFound, redirect } from 'next/navigation'
 import { AdminDepartmentClient } from './department-client'
+import { getDepartmentAnalytics } from '@/app/actions/analytics'
 
 export default async function AdminDepartmentPage(props: { 
   params: Promise<{ departmentId: string }>,
@@ -130,6 +131,8 @@ export default async function AdminDepartmentPage(props: {
     orderBy: { code: 'asc' },
   })
 
+  const analytics = await getDepartmentAnalytics(departmentId)
+
   return (
     <AdminDepartmentClient 
       overview={overview} 
@@ -138,6 +141,7 @@ export default async function AdminDepartmentPage(props: {
       subjects={subjects} 
       academicContexts={academicContexts}
       activeContextId={activeContext?.id || null}
+      analytics={analytics}
     />
   )
 }

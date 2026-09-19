@@ -4,14 +4,17 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Users, BookOpen, GraduationCap, Search, X,
-  User, Plus, Trash2, Check, LayoutDashboard, Edit3, Mail, Building2
+  User, Plus, Trash2, Check, LayoutDashboard, Edit3, Mail, Building2, ChevronDown
 } from 'lucide-react'
 import { hodRemoveFaculty, hodCreateSubject, hodDeleteSubject, hodUpdateSubject, hodCreateFaculty } from '@/app/actions/hod'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 import Link from 'next/link'
+import { DepartmentDashboard } from '@/components/features/analytics/department-dashboard'
+import { CustomSelect } from '@/components/ui/custom-select'
+import { AnalyticsData } from '@/app/actions/analytics'
 
 // ---- Types ----
 
@@ -104,16 +107,28 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
 // ---- Main Component ----
 
 export function HodDashboardClient({
-  overview, sections, faculty, subjects, ownSubjects, hodName,
+  overview, sections, faculty, subjects, ownSubjects, analytics, hodName, academicContexts, activeContextId
 }: {
   overview: Overview
   sections: SectionsGrouped
   faculty: FacultyItem[]
   subjects: SubjectItem[]
   ownSubjects: OwnSubject[]
+  analytics: AnalyticsData
   hodName: string
+  academicContexts: any[]
+  activeContextId: string | null
 }) {
   const [activeTab, setActiveTab] = useState<string>('dashboard')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const handleContextChange = (val: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (val) params.set('context', val)
+    else params.delete('context')
+    router.push(`?${params.toString()}`)
+  }
 
   const getSectionItems = (yearKey: string) => {
     return sections[yearKey]?.map(sec => ({
@@ -177,9 +192,37 @@ export function HodDashboardClient({
           { label: overview.department.code },
           { label: breadcrumbLabel },
         ]} />
+
+        {/* Context selector bar */}
+        <div className="bg-card border-b border-black/5 px-5 py-1.5 flex items-center justify-between sticky top-11 z-40">
+          <span className="text-[13px] font-semibold text-foreground flex items-center gap-1.5 tracking-tight">
+            <div className="p-1 bg-primary/10 rounded text-primary">
+              <Building2 className="w-3.5 h-3.5" />
+            </div>
+            {overview.department.name}
+          </span>
+          <CustomSelect
+            value={activeContextId || ''}
+            onChange={handleContextChange}
+            options={academicContexts.map((c: any) => ({
+              value: c.id,
+              label: `${c.academicYear} / ${c.semester.replace(' Semester', '')}`
+            }))}
+          />
+        </div>
+
         <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto w-full">
           <AnimatePresence mode="wait">
-            {activeTab === 'dashboard' && <DashboardTab key="dashboard" overview={overview} hodName={hodName} />}
+            {activeTab === 'dashboard' && (
+              <DepartmentDashboard 
+                key="dashboard" 
+                data={analytics} 
+                title={overview.department.name} 
+                subtitle={`Head of Department: ${hodName} | Academic Context: ${
+                  academicContexts.find(c => c.id === activeContextId)?.academicYear || 'All'
+                }`} 
+              />
+            )}
             {activeTab.startsWith('section-') && activeSection && (
               <SectionTab key={activeTab} section={activeSection} department={overview.department} />
             )}
@@ -193,54 +236,7 @@ export function HodDashboardClient({
   )
 }
 
-// ---- Dashboard Tab ----
-
-function DashboardTab({ overview, hodName }: { overview: Overview; hodName: string }) {
-  const { department, stats } = overview
-
-  const now = new Date()
-  const month = now.getMonth()
-  const year = now.getFullYear()
-  const academicYear = month >= 6 ? `${year}-${year + 1}` : `${year - 1}-${year}`
-  const semesterType = month >= 6 ? 'Odd Semester' : 'Even Semester'
-
-  const statItems = [
-    { value: stats.studentCount, label: 'Students' },
-    { value: stats.facultyCount, label: 'Faculty' },
-    { value: stats.sectionCount, label: 'Sections' },
-    { value: stats.subjectCount, label: 'Subjects' },
-  ]
-
-  return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.2 }} className="space-y-5">
-      <div className="glass-card rounded-md">
-        <div className="px-5 py-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-semibold text-foreground" style={{ letterSpacing: '-0.015em' }}>
-              {department.name}
-            </h2>
-            <p className="text-[12px] text-muted-foreground mt-0.5">
-              Head of Department: <span className="text-foreground font-medium">{hodName}</span>
-            </p>
-          </div>
-          <div className="text-left sm:text-right">
-            <p className="text-[13px] font-semibold text-foreground">{academicYear}</p>
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">{semesterType}</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
-          {statItems.map((stat, i) => (
-            <div key={i} className="px-5 py-4">
-              <p className="text-2xl font-bold text-foreground leading-none">{stat.value}</p>
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium mt-1.5">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  )
-}
+// Component DashboardTab was replaced by DepartmentDashboard
 
 // ---- Section Tab ----
 
@@ -422,6 +418,9 @@ function SubjectsTab({ subjects }: { subjects: SubjectItem[] }) {
   const [editingSubject, setEditingSubject] = useState<SubjectItem | null>(null)
   const router = useRouter()
 
+  const allYears = subjects.flatMap(s => s.courseOfferings.map(o => o.academicContext.academicYear))
+  const latestYear = allYears.length > 0 ? allYears.sort().reverse()[0] : ''
+
   const semesterGroups: Record<number, typeof subjects> = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [] }
   for (const sub of subjects) {
     if (semesterGroups[sub.semester]) semesterGroups[sub.semester].push(sub)
@@ -465,7 +464,7 @@ function SubjectsTab({ subjects }: { subjects: SubjectItem[] }) {
                     <div className="min-w-0 flex-1">
                       <p className="text-[13px] font-semibold truncate">{sub.code} — {sub.name}</p>
                       <p className="text-[11px] text-muted-foreground mt-0.5">
-                        {sub.courseOfferings.length} offering{sub.courseOfferings.length !== 1 ? 's' : ''}
+                        {sub.courseOfferings.filter(o => o.academicContext.academicYear === latestYear).length} offering{sub.courseOfferings.filter(o => o.academicContext.academicYear === latestYear).length !== 1 ? 's' : ''}
                       </p>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0 ml-2">
@@ -481,12 +480,12 @@ function SubjectsTab({ subjects }: { subjects: SubjectItem[] }) {
                       </button>
                     </div>
                   </div>
-                  {sub.courseOfferings.length > 0 && (
+                  {sub.courseOfferings.filter(o => o.academicContext.academicYear === latestYear).length > 0 && (
                     <div className="border-t border-border px-4 py-2.5 space-y-1.5">
-                      {sub.courseOfferings.map(o => (
+                      {sub.courseOfferings.filter(o => o.academicContext.academicYear === latestYear).map(o => (
                         <div key={o.id} className="flex items-center justify-between text-[11px]">
-                          <span className="text-muted-foreground">
-                            {o.section.year} Sec {o.section.name} · {o.academicContext.academicYear}
+                          <span className="text-muted-foreground font-medium">
+                            {o.section.year} Sec {o.section.name}
                           </span>
                           <div>
                             {o.assignments.length > 0 ? (
@@ -541,7 +540,7 @@ function MySubjectsTab({ ownSubjects }: { ownSubjects: OwnSubject[] }) {
             return (
               <motion.div key={offering.id} custom={i} variants={cardVariants} initial="hidden" animate="visible">
                 <Link
-                  href={`/faculty/subjects/${offering.id}`}
+                  href={`/hod/subjects/${offering.id}`}
                   className="glass-card rounded-md p-4 block group transition-shadow duration-150 hover:shadow-md"
                 >
                   <div className="flex items-center gap-2.5 mb-3">
