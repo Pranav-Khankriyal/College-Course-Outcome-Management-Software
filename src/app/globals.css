@@ -1,26 +1,255 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 1px);
+  --radius-sm: calc(var(--radius) - 2px);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* === BASE SURFACES === */
+    --background: 220 20% 96%;        /* #EEF1F7 cool light gray */
+    --foreground: 222 47% 9%;         /* #0E1526 deep navy-black */
+
+    --card: 0 0% 100%;                /* pure white panels */
+    --card-foreground: 222 47% 9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 9%;
+
+    /* === PRIMARY ACCENT — electric blue === */
+    --primary: 221 83% 53%;           /* #2563EB */
+    --primary-foreground: 0 0% 100%;
+
+    /* === SECONDARY SURFACES === */
+    --secondary: 220 17% 91%;         /* #E3E6EF */
+    --secondary-foreground: 222 30% 25%;
+
+    --muted: 220 17% 93%;
+    --muted-foreground: 220 12% 50%;  /* #757E96 */
+
+    --accent: 221 83% 53%;
+    --accent-foreground: 0 0% 100%;
+
+    /* === SEMANTIC === */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* === STRUCTURE === */
+    --border: 220 14% 87%;            /* #D5DAEB */
+    --input: 220 14% 90%;
+    --ring: 221 83% 53%;
+
+    /* === SHAPE LANGUAGE — soft, modern === */
+    --radius: 0.5rem;                 /* 8px — softer aesthetic */
+
+    /* === CO LEVEL SEMANTICS === */
+    --level-3: 142 76% 36%;
+    --level-2: 38 92% 44%;
+    --level-1: 25 95% 50%;
+    --level-0: 0 72% 51%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    /* === DARK SIDEBAR SURFACE === */
+    --sidebar-bg: 222 44% 7%;         /* #0B0F1C deep navy */
+    --sidebar-border: 222 30% 14%;    /* subtle divider */
+    --sidebar-fg: 220 18% 62%;        /* muted sidebar text */
+    --sidebar-fg-dim: 220 14% 38%;    /* very muted */
+    --sidebar-active-bg: 221 83% 53%; /* same as primary for opacity usage */
+    --sidebar-active-text: 213 100% 73%; /* bright highlight */
+
+    /* Legacy compatibility */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border-legacy: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.018em;
+  }
 }
+
+@layer components {
+
+  /* ─── SURFACE SYSTEM ─────────────────────────────────── */
+
+  /* Flat surface panel — clean border, minimal shadow */
+  .glass-card {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 1px 3px rgba(14, 21, 38, 0.05), 0 1px 2px rgba(14, 21, 38, 0.03);
+  }
+
+  /* Elevated surface panel */
+  .glass-card-strong {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 4px 6px -1px rgba(14, 21, 38, 0.05), 0 2px 4px -2px rgba(14, 21, 38, 0.03);
+  }
+
+  /* ─── INPUT SYSTEM ───────────────────────────────────── */
+
+  .glass-input {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .glass-input::placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 0.75;
+  }
+  .glass-input:focus {
+    outline: none;
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 3px hsl(221 83% 53% / 0.12);
+  }
+
+  /* ─── ACTION SYSTEM ─────────────────────────────────── */
+
+  .gradient-primary {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+    transition: background-color 150ms ease, opacity 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+  }
+  .gradient-primary:hover:not(:disabled) {
+    background-color: hsl(221 83% 47%);
+  }
+  .gradient-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .gradient-unit1 {
+    background-color: hsl(221 83% 53%);
+    color: white;
+  }
+  .gradient-unit2 {
+    background-color: hsl(262 80% 55%);
+    color: white;
+  }
+
+  /* ─── CO LEVEL BADGES ───────────────────────────────── */
+
+  .level-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: calc(var(--radius) - 1px);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: white;
+    letter-spacing: 0.01em;
+  }
+  .level-3 { background-color: hsl(var(--level-3)); }
+  .level-2 { background-color: hsl(var(--level-2)); color: hsl(222 47% 9%); }
+  .level-1 { background-color: hsl(var(--level-1)); }
+  .level-0 { background-color: hsl(var(--level-0)); }
+}
+
+/* ─── SPINNER ────────────────────────────────────────────── */
+.btn-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 9999px;
+  animation: spin 0.65s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── LOGIN PAGE — glassmorphism + blobs (isolated) ─────── */
+
+/* Glassmorphism card — login page only */
+.login-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* Glassmorphism input — login page only */
+.login-input {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: hsl(var(--foreground));
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.login-input::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+.login-input:focus {
+  border-color: hsl(var(--primary) / 0.5);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15);
+}
+
+/* Animated blob — login page only */
+.login-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(48px);
+  opacity: 0.3;
+  animation: blob 8s ease-in-out infinite;
+}
+
+@keyframes blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25%       { transform: translate(30px, -50px) scale(1.1); }
+  50%       { transform: translate(-20px, 20px) scale(0.9); }
+  75%       { transform: translate(20px, 40px) scale(1.05); }
+}
+
+.animation-delay-2000 { animation-delay: 2s; }
+.animation-delay-4000 { animation-delay: 4s; }

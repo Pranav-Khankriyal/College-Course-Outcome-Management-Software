@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  HOD
+  FACULTY
+}
+
+model User {
+  id             String       @id @default(uuid())
+  email          String       @unique
+  name           String
+  hashedPassword String
+  role           Role         @default(FACULTY)
+  isActive       Boolean      @default(true)
+  
+  departments        Department[]
+  facultyAssignments FacultyAssignment[]
+}
+
+model Department {
+  id     String @id @default(uuid())
+  name   String
+  code   String @unique
+  hodId  String?
+  
+  hod      User?     @relation(fields: [hodId], references: [id])
+  subjects Subject[]
+  sections Section[]
+  students Student[]
+}
+
+model AcademicContext {
+  id           String @id @default(uuid())
+  academicYear String
+  semester     String
+  
+  courseOfferings    CourseOffering[]
+  sectionEnrollments SectionEnrollment[]
+
+  @@unique([academicYear, semester])
+}
+
+model Subject {
+  id           String @id @default(uuid())
+  name         String
+  code         String
+  semester     Int    @default(1)
+  departmentId String
+  
+  department      Department       @relation(fields: [departmentId], references: [id])
+  courseOfferings CourseOffering[]
+}
+
+model Section {
+  id           String @id @default(uuid())
+  name         String
+  year         String @default("FY") // FY, SY, TY, Final Year
+  departmentId String
+  
+  department         Department          @relation(fields: [departmentId], references: [id])
+  courseOfferings    CourseOffering[]
+  sectionEnrollments SectionEnrollment[]
+}
+
+model CourseOffering {
+  id                String @id @default(uuid())
+  subjectId         String
+  academicContextId String
+  sectionId         String
+  
+  subject         Subject         @relation(fields: [subjectId], references: [id])
+  academicContext AcademicContext @relation(fields: [academicContextId], references: [id])
+  section         Section         @relation(fields: [sectionId], references: [id])
+
+  assignments    FacultyAssignment[]
+  outcomes       CourseOutcome[]
+  assessments    Assessment[]
+  configurations AttainmentConfiguration[]
+  internalResults InternalAssessment[]
+}
+
+model FacultyAssignment {
+  id               String @id @default(uuid())
+  userId           String
+  courseOfferingId String
+  
+  user           User           @relation(fields: [userId], references: [id])
+  courseOffering CourseOffering @relation(fields: [courseOfferingId], references: [id])
+
+  @@unique([userId, courseOfferingId])
+}
+
+model Student {
+  id           String @id @default(uuid())
+  prn          String @unique
+  name         String
+  departmentId String
+  
+  department  Department          @relation(fields: [departmentId], references: [id])
+  enrollments SectionEnrollment[]
+  marks       StudentMark[]
+  internalResults InternalAssessment[]
+}
+
+model SectionEnrollment {
+  id                String @id @default(uuid())
+  studentId         String
+  sectionId         String
+  academicContextId String
+  rollNumber        String
+  
+  student         Student         @relation(fields: [studentId], references: [id])
+  section         Section         @relation(fields: [sectionId], references: [id])
+  academicContext AcademicContext @relation(fields: [academicContextId], references: [id])
+
+  @@unique([sectionId, academicContextId, rollNumber])
+  @@unique([studentId, sectionId, academicContextId])
+}
+
+model CourseOutcome {
+  id               String @id @default(uuid())
+  courseOfferingId String
+  code             String
+  description      String?
+  
+  courseOffering CourseOffering @relation(fields: [courseOfferingId], references: [id])
+  questions      AssessmentQuestion[]
+
+  @@unique([courseOfferingId, code])
+}
+
+model Assessment {
+  id               String @id @default(uuid())
+  courseOfferingId String
+  name             String
+  
+  courseOffering CourseOffering @relation(fields: [courseOfferingId], references: [id])
+  questions      AssessmentQuestion[]
+}
+
+model AssessmentQuestion {
+  id              String @id @default(uuid())
+  assessmentId    String
+  courseOutcomeId String
+  questionNumber  Int
+  maxMarks        Int
+  
+  assessment    Assessment    @relation(fields: [assessmentId], references: [id])
+  courseOutcome CourseOutcome @relation(fields: [courseOutcomeId], references: [id])
+  studentMarks  StudentMark[]
+}
+
+model StudentMark {
+  id                   String  @id @default(uuid())
+  studentId            String
+  assessmentQuestionId String
+  marksObtained        Int?
+  isAbsent             Boolean @default(false)
+  
+  student            Student            @relation(fields: [studentId], references: [id])
+  assessmentQuestion AssessmentQuestion @relation(fields: [assessmentQuestionId], references: [id])
+
+  @@unique([studentId, assessmentQuestionId])
+}
+
+model AttainmentConfiguration {
+  id                  String @id @default(uuid())
+  courseOfferingId    String
+  level               Int
+  thresholdPercentage Float
+  
+  courseOffering CourseOffering @relation(fields: [courseOfferingId], references: [id])
+
+  @@unique([courseOfferingId, level])
+}
+
+model InternalAssessment {
+  id               String @id @default(uuid())
+  studentId        String
+  courseOfferingId String
+  finalScore       Int
+  
+  student        Student        @relation(fields: [studentId], references: [id])
+  courseOffering CourseOffering @relation(fields: [courseOfferingId], references: [id])
+
+  @@unique([studentId, courseOfferingId])
+}
