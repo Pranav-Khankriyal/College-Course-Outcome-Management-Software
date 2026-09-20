@@ -222,3 +222,68 @@
 
 .animation-delay-2000 { animation-delay: 2s; }
 .animation-delay-4000 { animation-delay: 4s; }
+
+/* ─── QUESTION PAPER — Print Styles ────────────────────── */
+
+@media print {
+  /* Hide everything except the question paper */
+  body * {
+    visibility: hidden;
+  }
+
+  .question-paper-preview,
+  .question-paper-preview * {
+    visibility: visible !important;
+  }
+
+  .question-paper-preview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 210mm !important;
+    min-height: 148.5mm !important;
+    border: 2px solid #000 !important;
+    padding: 10mm 15mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+    box-sizing: border-box !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide all no-print elements */
+  .no-print,
+  .no-print * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Hide form controls in print mode — show values instead */
+  .question-paper-preview input,
+  .question-paper-preview select,
+  .question-paper-preview textarea {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    -webkit-appearance: none;
+    appearance: none;
+    font-family: 'Times New Roman', serif !important;
+  }
+
+  .question-paper-preview select {
+    -moz-appearance: none;
+  }
+
+  /* A4 page setup */
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  /* Ensure proper table printing */
+  .question-paper-preview table {
+    page-break-inside: avoid;
+  }
+}
+

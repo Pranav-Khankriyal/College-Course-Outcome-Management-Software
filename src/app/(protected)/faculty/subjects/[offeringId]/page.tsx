@@ -1,6 +1,8 @@
 import { db } from '@/lib/db'
 import { ExcelUpload } from '@/components/features/faculty/excel-upload'
-import { ArrowLeft, BookOpen, GraduationCap, Layers, BarChart3 } from 'lucide-react'
+import { RecentQuestionPapers } from '@/components/features/faculty/question-paper-form'
+import { getRecentQuestionPapers } from '@/app/actions/question-paper'
+import { ArrowLeft, BookOpen, GraduationCap, Layers, BarChart3, FileEdit } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
@@ -77,6 +79,8 @@ export default async function SubjectPage(props: { params: Promise<{ offeringId:
 
   const hasMarks = enrollments.some(e => e.student.marks.length > 0)
 
+  const recentPapers = await getRecentQuestionPapers(offeringId)
+
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 space-y-5">
       {/* Back + Header */}
@@ -135,6 +139,24 @@ export default async function SubjectPage(props: { params: Promise<{ offeringId:
           </div>
         ))}
       </div>
+
+      {/* Create Question Paper CTA */}
+      <Link
+        href={`/faculty/subjects/${offeringId}/question-paper`}
+        className="bg-card rounded-2xl border border-black/5 shadow-sm p-4 flex items-center gap-4 group hover:shadow-md transition-shadow duration-200"
+      >
+        <div className="p-2.5 rounded-xl" style={{ backgroundColor: 'hsl(262 80% 55% / 0.1)' }}>
+          <FileEdit className="w-5 h-5" style={{ color: 'hsl(262, 80%, 55%)' }} />
+        </div>
+        <div>
+          <h3 className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors duration-150">
+            Create Question Paper
+          </h3>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Generate UT question paper with CO mapping using the official template
+          </p>
+        </div>
+      </Link>
 
       {/* Excel Upload */}
       <ExcelUpload offeringId={offeringId} />
@@ -230,7 +252,10 @@ export default async function SubjectPage(props: { params: Promise<{ offeringId:
             </table>
           </div>
         )}
-      </div>
+    </div>
+
+      {/* Recently Generated Papers */}
+      <RecentQuestionPapers papers={recentPapers} />
     </div>
   )
 }
