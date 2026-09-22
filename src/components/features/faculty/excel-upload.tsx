@@ -114,7 +114,7 @@ export function ExcelUpload({ offeringId }: { offeringId: string }) {
 
           const result = await importMarksFromExcel(offeringId, payload as any)
           if (result.success) {
-            setImportMsg({ type: 'success', text: `Successfully imported ${(result as any).count} students with marks.` })
+            setImportMsg({ type: 'success', text: `Successfully updated marks for ${(result as any).count} students.` })
           } else {
             setImportMsg({ type: 'error', text: (result as any).error || 'Import failed. Please try again.' })
           }
@@ -149,7 +149,7 @@ export function ExcelUpload({ offeringId }: { offeringId: string }) {
     try {
       const result = await importMarksFromExcel(offeringId, pendingPayload)
       if (result.success) {
-        setImportMsg({ type: 'success', text: `Successfully imported ${(result as any).count} students with marks.` })
+        setImportMsg({ type: 'success', text: `Successfully updated marks for ${(result as any).count} students.` })
       } else {
         setImportMsg({ type: 'error', text: (result as any).error || 'Import failed. Please try again.' })
       }

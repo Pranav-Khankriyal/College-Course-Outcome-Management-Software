@@ -261,6 +261,43 @@ export async function hodRemoveFaculty(assignmentId: string) {
   return { success: true }
 }
 
+export async function hodRemoveFacultyFromDepartment(userId: string) {
+  const { department } = await getHodDepartment()
+
+  // Verify the user is associated with the department
+  const user = await db.user.findFirst({
+    where: {
+      id: userId,
+      departments: { some: { id: department.id } }
+    }
+  })
+
+  if (!user) {
+    return { error: 'Faculty not found in your department' }
+  }
+
+  // 1. Delete all faculty assignments for this user in this department
+  await db.facultyAssignment.deleteMany({
+    where: {
+      userId,
+      courseOffering: {
+        section: { departmentId: department.id }
+      }
+    }
+  })
+
+  // 2. Disconnect the user from the department
+  await db.user.update({
+    where: { id: userId },
+    data: {
+      departments: { disconnect: { id: department.id } }
+    }
+  })
+
+  revalidatePath('/hod')
+  return { success: true }
+}
+
 // ---- Subjects ----
 
 export async function getHodSubjects() {

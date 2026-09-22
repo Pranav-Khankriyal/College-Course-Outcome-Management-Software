@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card'
 import { Plus, Edit2, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
 import { createAcademicPeriod, updateAcademicPeriod } from '@/app/actions/academic'
+import { AcademicPeriodStatus } from '@prisma/client'
 
 export function AcademicPeriodsClient({
   initialPeriods

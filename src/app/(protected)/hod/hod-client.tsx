@@ -6,8 +6,9 @@ import {
   Users, BookOpen, GraduationCap, Search, X,
   User, Plus, Trash2, Check, LayoutDashboard, Edit3, Mail, Building2, ChevronDown
 } from 'lucide-react'
-import { hodRemoveFaculty, hodCreateSubject, hodDeleteSubject, hodUpdateSubject, hodCreateFaculty } from '@/app/actions/hod'
+import { hodRemoveFaculty, hodRemoveFacultyFromDepartment, hodCreateSubject, hodDeleteSubject, hodUpdateSubject, hodCreateFaculty } from '@/app/actions/hod'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { toast } from 'sonner'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
@@ -306,6 +307,7 @@ function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
   const [assignmentToDelete, setAssignmentToDelete] = useState<string | null>(null)
+  const [facultyToRemove, setFacultyToRemove] = useState<string | null>(null)
   const router = useRouter()
 
   const filtered = faculty.filter(f =>
@@ -315,14 +317,36 @@ function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
 
   const confirmRemoveAssignment = async () => {
     if (!assignmentToDelete) return
-    const result = await hodRemoveFaculty(assignmentToDelete)
-    if (result.success) {
-      toast.success('Faculty assignment removed')
-      router.refresh()
-    } else {
-      toast.error(result.error || 'Failed')
+    try {
+      const result = await hodRemoveFaculty(assignmentToDelete)
+      if (result.success) {
+        toast.success('Faculty assignment removed')
+        router.refresh()
+      } else {
+        toast.error(result.error || 'Failed')
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'An unexpected error occurred')
+    } finally {
+      setAssignmentToDelete(null)
     }
-    setAssignmentToDelete(null)
+  }
+
+  const confirmRemoveFaculty = async () => {
+    if (!facultyToRemove) return
+    try {
+      const result = await hodRemoveFacultyFromDepartment(facultyToRemove)
+      if (result.success) {
+        toast.success('Faculty removed from department')
+        router.refresh()
+      } else {
+        toast.error(result.error || 'Failed')
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'An unexpected error occurred')
+    } finally {
+      setFacultyToRemove(null)
+    }
   }
 
   return (
@@ -368,6 +392,15 @@ function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
                   ? 'bg-blue-500/10 text-blue-600'
                   : 'bg-emerald-500/10 text-emerald-600'
               }`}>{f.user.role}</span>
+              {f.user.role !== 'HOD' && (
+                <button
+                  onClick={() => setFacultyToRemove(f.user.id)}
+                  className="p-1.5 rounded transition-colors duration-150 hover:bg-destructive/10 text-muted-foreground hover:text-destructive flex-shrink-0 ml-1"
+                  title="Remove faculty from department"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
             </div>
             <div className="px-5 py-3">
               {f.assignments.length > 0 ? (
@@ -419,6 +452,16 @@ function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
         confirmText="Remove"
         onConfirm={confirmRemoveAssignment}
         onCancel={() => setAssignmentToDelete(null)}
+      />
+
+      <ConfirmDialog 
+        isOpen={!!facultyToRemove}
+        title="Remove Faculty"
+        description="Are you sure you want to remove this faculty from the department? This will also remove all their subject assignments in this department."
+        isDanger={true}
+        confirmText="Remove Faculty"
+        onConfirm={confirmRemoveFaculty}
+        onCancel={() => setFacultyToRemove(null)}
       />
     </motion.div>
   )
