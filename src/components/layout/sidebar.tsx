@@ -25,6 +25,8 @@ function getNavItems(role: string, onNavigate?: (key: string) => void): NavItem[
       { key: 'departments', label: 'Departments',    icon: <Building2 className="w-[15px] h-[15px]" />, onClick: () => onNavigate?.('departments') },
       { key: 'users',       label: 'Faculty & Users', icon: <UserCog   className="w-[15px] h-[15px]" />, onClick: () => onNavigate?.('users') },
       { key: 'subjects',    label: 'Subjects',        icon: <BookOpen  className="w-[15px] h-[15px]" />, onClick: () => onNavigate?.('subjects') },
+      { key: 'students',    label: 'Student Master',  icon: <Users     className="w-[15px] h-[15px]" />, href: '/admin/students' },
+      { key: 'promotion',   label: 'Semester Promotion', icon: <GraduationCap className="w-[15px] h-[15px]" />, href: '/admin/promotion' },
     ]
   }
   if (role === 'HOD') {
@@ -33,6 +35,8 @@ function getNavItems(role: string, onNavigate?: (key: string) => void): NavItem[
       { key: 'faculty',     label: 'Faculty',         icon: <Users     className="w-[15px] h-[15px]" />, onClick: () => onNavigate?.('faculty') },
       { key: 'subjects',    label: 'Subjects',        icon: <BookOpen  className="w-[15px] h-[15px]" />, onClick: () => onNavigate?.('subjects') },
       { key: 'marks',       label: 'Marks',           icon: <BarChart3 className="w-[15px] h-[15px]" />, onClick: () => onNavigate?.('marks') },
+      { key: 'students',    label: 'Student Master',  icon: <Users     className="w-[15px] h-[15px]" />, href: '/hod/students' },
+      { key: 'promotion',   label: 'Semester Promotion', icon: <GraduationCap className="w-[15px] h-[15px]" />, href: '/hod/promotion' },
       { key: 'my-subjects', label: 'My Subjects',     icon: <GraduationCap className="w-[15px] h-[15px]" />, onClick: () => onNavigate?.('my-subjects') },
     ]
   }

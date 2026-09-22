@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { LogOut, ChevronRight } from 'lucide-react'
+import { LogOut, ChevronRight, Settings } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
+import Link from 'next/link'
 
 export function Header({ breadcrumbs }: { breadcrumbs?: { label: string; href?: string }[] }) {
   const { data: session } = useSession()
@@ -124,6 +125,18 @@ export function Header({ breadcrumbs }: { breadcrumbs?: { label: string; href?: 
                   <LogOut className="w-3.5 h-3.5 flex-shrink-0" />
                   Sign out
                 </button>
+                {['ADMIN', 'HOD'].includes(role) && (
+                  <Link
+                    href={`/${role.toLowerCase()}/settings`}
+                    onClick={() => setDropdownOpen(false)}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-[13px] font-medium transition-colors duration-150 text-muted-foreground hover:text-foreground"
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(0,0,0,0.04)'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = ''}
+                  >
+                    <Settings className="w-3.5 h-3.5 flex-shrink-0" />
+                    Settings
+                  </Link>
+                )}
               </div>
             </div>
           )}

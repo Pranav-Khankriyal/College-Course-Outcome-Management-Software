@@ -43,7 +43,9 @@ function AssessmentProgress({ data }: { data: AnalyticsData }) {
 
 export function DepartmentDashboard({ data, title, subtitle }: { data: AnalyticsData; title: string; subtitle: string }) {
 
-  const acronym = title.split(/[\s&]+/).filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 4)
+  const acronym = title.split(/[\s&]+/)
+    .filter(w => w.trim().length > 0 && !['and', 'of', 'for', 'the', 'in'].includes(w.toLowerCase()))
+    .map(w => w[0]).join('').toUpperCase().slice(0, 4)
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}

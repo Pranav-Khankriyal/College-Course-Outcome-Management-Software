@@ -43,11 +43,12 @@ export function AdminDepartmentClient({
   }
 
   const getSectionItems = (yearKey: string) => {
-    return sections[yearKey]?.map(sec => ({
+    const items = sections[yearKey]?.map(sec => ({
       key: `section-${sec.id}`,
       label: `Sec ${sec.name}`,
       onClick: () => setActiveTab(`section-${sec.id}`)
     })) || []
+    return items.length > 0 ? items : [{ key: `empty-${yearKey}`, label: 'No sections', onClick: () => {} }]
   }
 
   const customNavItems = [

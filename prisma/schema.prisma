@@ -13,6 +13,21 @@ enum Role {
   FACULTY
 }
 
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  LEFT
+  TRANSFERRED
+  GRADUATED
+  ALUMNI
+}
+
+enum AcademicPeriodStatus {
+  UPCOMING
+  CURRENT
+  COMPLETED
+}
+
 model User {
   id             String       @id @default(uuid())
   email          String       @unique
@@ -36,12 +51,17 @@ model Department {
   subjects Subject[]
   sections Section[]
   students Student[]
+  appSettings AppSetting[]
 }
 
 model AcademicContext {
   id           String @id @default(uuid())
   academicYear String
   semester     String
+  term         String? // e.g., "Odd", "Even"
+  startDate    DateTime?
+  endDate      DateTime?
+  status       AcademicPeriodStatus @default(UPCOMING)
   
   courseOfferings    CourseOffering[]
   sectionEnrollments SectionEnrollment[]
@@ -101,10 +121,14 @@ model FacultyAssignment {
 }
 
 model Student {
-  id           String @id @default(uuid())
-  prn          String @unique
-  name         String
-  departmentId String
+  id            String        @id @default(uuid())
+  prn           String        @unique // Permanent Registration Number / Enrollment Number
+  name          String
+  departmentId  String
+  email         String?
+  phone         String?
+  admissionYear String?
+  status        StudentStatus @default(ACTIVE)
   
   department  Department          @relation(fields: [departmentId], references: [id])
   enrollments SectionEnrollment[]
@@ -215,4 +239,16 @@ model QuestionPaper {
 
   courseOffering CourseOffering @relation(fields: [courseOfferingId], references: [id])
   createdBy     User           @relation(fields: [createdByUserId], references: [id])
+}
+
+model AppSetting {
+  id           String      @id @default(uuid())
+  key          String
+  value        String
+  departmentId String?
+  academicYear String?
+  
+  department   Department? @relation(fields: [departmentId], references: [id])
+  
+  @@unique([key, departmentId, academicYear])
 }

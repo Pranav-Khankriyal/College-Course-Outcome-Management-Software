@@ -1,21 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Building2, Users, BookOpen, Shield, GraduationCap,
   UserPlus, Edit3, ToggleLeft, ToggleRight, KeyRound, Mail, User, Eye, EyeOff, X, Check, Search,
-  UserCog, Plus, Trash2, ArrowRight,
+  UserCog, Plus, Trash2, ArrowRight, Upload, FileText, AlertCircle, CheckCircle
 } from 'lucide-react'
 import {
   createUser, updateUser, toggleUserActive, resetUserPassword,
   createSubject, updateSubject, deleteSubject,
   promoteToAdmin, demoteFromAdmin,
+  previewFacultyImport, confirmFacultyImport
 } from '@/app/actions/admin'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 // ---- Types ----
 
@@ -204,6 +206,11 @@ function UsersTab({ users }: { users: UserItem[] }) {
   const [resetPwdUser, setResetPwdUser] = useState<UserItem | null>(null)
   const [activeCategory, setActiveCategory] = useState<'ADMIN' | 'HOD' | 'FACULTY'>('FACULTY')
   const [searchQuery, setSearchQuery] = useState('')
+  const [userToPromote, setUserToPromote] = useState<string | null>(null)
+  const [userToDemote, setUserToDemote] = useState<string | null>(null)
+  const [isImportOpen, setIsImportOpen] = useState(false)
+  const [previewData, setPreviewData] = useState<any>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
   const displayedUsers = users.filter(u => {
@@ -223,17 +230,49 @@ function UsersTab({ users }: { users: UserItem[] }) {
     }
   }
 
-  const handlePromoteToAdmin = async (userId: string) => {
-    if (!confirm('Promote this user to Admin?')) return
-    const result = await promoteToAdmin(userId)
+  const confirmPromote = async () => {
+    if (!userToPromote) return
+    const result = await promoteToAdmin(userToPromote)
     if (result.success) { toast.success('User promoted to Admin'); router.refresh() }
+    setUserToPromote(null)
   }
 
-  const handleDemoteFromAdmin = async (userId: string) => {
-    if (!confirm('Remove this user from the Admin pool?')) return
-    const result = await demoteFromAdmin(userId)
+  const confirmDemote = async () => {
+    if (!userToDemote) return
+    const result = await demoteFromAdmin(userToDemote)
     if (result.success) { toast.success('User removed from admin pool'); router.refresh() }
     else toast.error(result.error || 'Failed')
+    setUserToDemote(null)
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = async (event) => {
+      try {
+        const base64 = (event.target?.result as string).split(',')[1]
+        const preview = await previewFacultyImport(base64)
+        setPreviewData(preview)
+      } catch (err: any) {
+        toast.error('Import Error: ' + err.message)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleConfirmImport = async () => {
+    if (!previewData) return
+    try {
+      await confirmFacultyImport(previewData.parsedData)
+      setIsImportOpen(false)
+      setPreviewData(null)
+      router.refresh()
+      toast.success('Faculty imported successfully')
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to import faculty')
+    }
   }
 
   return (
@@ -242,13 +281,22 @@ function UsersTab({ users }: { users: UserItem[] }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
         <h2 className="text-xl font-bold tracking-tight text-foreground">Faculty & Users</h2>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="bg-foreground text-background hover:bg-foreground/90 px-4 py-2 rounded-xl text-[13px] font-medium transition-colors duration-200 flex items-center gap-1.5 shadow-sm"
-        >
-          <UserPlus className="w-3.5 h-3.5" />
-          Add User
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsImportOpen(true)}
+            className="bg-card text-foreground hover:bg-black/5 px-4 py-2 rounded-xl text-[13px] font-medium transition-colors duration-200 flex items-center gap-1.5 shadow-sm border border-black/5"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Import Excel
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="bg-foreground text-background hover:bg-foreground/90 px-4 py-2 rounded-xl text-[13px] font-medium transition-colors duration-200 flex items-center gap-1.5 shadow-sm"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            Add User
+          </button>
+        </div>
       </div>
 
       {/* Category + Search */}
@@ -334,7 +382,7 @@ function UsersTab({ users }: { users: UserItem[] }) {
                     <div className="flex items-center justify-end gap-1">
                       {activeCategory === 'ADMIN' ? (
                         <button
-                          onClick={() => handleDemoteFromAdmin(user.id)}
+                          onClick={() => setUserToDemote(user.id)}
                           className="p-1.5 rounded transition-colors duration-150"
                           style={{ color: 'hsl(0, 72%, 51%)' }}
                           onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = 'hsl(0 72% 51% / 0.08)'}
@@ -345,7 +393,7 @@ function UsersTab({ users }: { users: UserItem[] }) {
                         </button>
                       ) : (
                         <button
-                          onClick={() => handlePromoteToAdmin(user.id)}
+                          onClick={() => setUserToPromote(user.id)}
                           className="p-1.5 rounded transition-colors duration-150"
                           style={{ color: 'hsl(262, 80%, 55%)' }}
                           onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = 'hsl(262 80% 55% / 0.08)'}
@@ -415,6 +463,108 @@ function UsersTab({ users }: { users: UserItem[] }) {
       <AnimatePresence>
         {resetPwdUser && <ResetPasswordModal user={resetPwdUser} onClose={() => setResetPwdUser(null)} />}
       </AnimatePresence>
+
+      <ConfirmDialog 
+        isOpen={!!userToPromote}
+        title="Promote to Admin"
+        description="Are you sure you want to promote this user to Admin?"
+        confirmText="Promote"
+        onConfirm={confirmPromote}
+        onCancel={() => setUserToPromote(null)}
+      />
+
+      <ConfirmDialog 
+        isOpen={!!userToDemote}
+        title="Remove from Admins"
+        description="Are you sure you want to remove this user from the Admin pool?"
+        isDanger={true}
+        confirmText="Remove"
+        onConfirm={confirmDemote}
+        onCancel={() => setUserToDemote(null)}
+      />
+
+      {/* IMPORT MODAL */}
+      {isImportOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden border border-slate-100 text-slate-900">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="font-semibold text-slate-800">Import Faculty/Users</h3>
+              <button onClick={() => { setIsImportOpen(false); setPreviewData(null) }} className="text-slate-400 hover:text-slate-600">×</button>
+            </div>
+            
+            <div className="p-6">
+              {!previewData ? (
+                <div className="space-y-4">
+                  <div className="bg-indigo-50 text-indigo-800 p-4 rounded-xl text-sm border border-indigo-100">
+                    <strong>Format Required:</strong> Excel file with columns: <code>Name</code>, <code>Email</code>. 
+                    <br/>Optional columns: <code>Role</code> (FACULTY, HOD, ADMIN), <code>Password</code>.
+                  </div>
+                  
+                  <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                    <Upload className="w-8 h-8 text-slate-400 mx-auto mb-3" />
+                    <p className="text-sm font-medium text-slate-700">Click to upload Excel file</p>
+                    <p className="text-xs text-slate-500 mt-1">.xlsx, .xls</p>
+                    <input type="file" className="hidden" ref={fileInputRef} accept=".xlsx, .xls" onChange={handleFileChange} />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                    <h4 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-indigo-500" />
+                      Import Preview
+                    </h4>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm text-center">
+                        <div className="text-2xl font-bold text-slate-900">{previewData.totalRows}</div>
+                        <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mt-1">Total Rows</div>
+                      </div>
+                      <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm text-center">
+                        <div className="text-2xl font-bold text-emerald-600">{previewData.newFaculty}</div>
+                        <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mt-1">New Users</div>
+                      </div>
+                      <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm text-center">
+                        <div className="text-2xl font-bold text-blue-600">{previewData.existingFaculty}</div>
+                        <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mt-1">Updates</div>
+                      </div>
+                      <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm text-center">
+                        <div className="text-2xl font-bold text-rose-600">{previewData.invalidRows}</div>
+                        <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mt-1">Invalid</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-200/60 p-4 rounded-xl flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                    <div className="text-sm text-amber-800">
+                      <strong>Please confirm carefully.</strong> This will create or update <strong>{previewData.totalRows - previewData.invalidRows}</strong> user accounts.
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50">
+              <button
+                onClick={() => { setIsImportOpen(false); setPreviewData(null) }}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              {previewData && (
+                <button
+                  onClick={handleConfirmImport}
+                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors inline-flex items-center gap-2"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Confirm Import
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   )
 }
@@ -424,6 +574,7 @@ function UsersTab({ users }: { users: UserItem[] }) {
 function SubjectsTab({ departments }: { departments: Department[] }) {
   const [selectedDept, setSelectedDept] = useState<string>(departments[0]?.id || '')
   const [addSubjectSem, setAddSubjectSem] = useState<number | null>(null)
+  const [subjectToDelete, setSubjectToDelete] = useState<string | null>(null)
   const router = useRouter()
 
   const dept = departments.find(d => d.id === selectedDept)
@@ -437,11 +588,12 @@ function SubjectsTab({ departments }: { departments: Department[] }) {
     }
   }
 
-  const handleDeleteSubject = async (subjectId: string) => {
-    if (!confirm('Are you sure you want to delete this subject?')) return
-    const result = await deleteSubject(subjectId)
+  const confirmDeleteSubject = async () => {
+    if (!subjectToDelete) return
+    const result = await deleteSubject(subjectToDelete)
     if (result.success) { toast.success('Subject deleted'); router.refresh() }
     else toast.error(result.error || 'Failed')
+    setSubjectToDelete(null)
   }
 
   return (
@@ -495,7 +647,7 @@ function SubjectsTab({ departments }: { departments: Department[] }) {
                       </div>
                     </div>
                     <button
-                      onClick={() => handleDeleteSubject(sub.id)}
+                      onClick={() => setSubjectToDelete(sub.id)}
                       className="p-1.5 rounded opacity-0 group-hover:opacity-100 flex-shrink-0 transition-all duration-150 text-muted-foreground"
                       onMouseEnter={e => {
                         ;(e.currentTarget as HTMLElement).style.backgroundColor = 'hsl(0 72% 51% / 0.08)'
@@ -529,6 +681,16 @@ function SubjectsTab({ departments }: { departments: Department[] }) {
           />
         )}
       </AnimatePresence>
+
+      <ConfirmDialog 
+        isOpen={!!subjectToDelete}
+        title="Delete Subject"
+        description="Are you sure you want to delete this subject? This action cannot be undone."
+        isDanger={true}
+        confirmText="Delete"
+        onConfirm={confirmDeleteSubject}
+        onCancel={() => setSubjectToDelete(null)}
+      />
     </motion.div>
   )
 }

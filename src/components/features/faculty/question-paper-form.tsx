@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useRef, useCallback, Fragment } from 'react'
+import { useState, useRef, useCallback, Fragment, useEffect } from 'react'
 import Image from 'next/image'
 import { FileDown, FileText, Save, Eye, Edit3, ChevronDown, Clock, Loader2 } from 'lucide-react'
 import { saveQuestionPaper, type QuestionPaperInput, type QuestionGroup, type QuestionData } from '@/app/actions/question-paper'
 import { DEPARTMENTS } from '@/lib/constants'
+import { getActiveStructure, getCustomStructures } from '@/app/actions/settings'
+import { PREDEFINED_STRUCTURES, getSemesterYearMapping, type CoStructure } from '@/lib/co-structures'
 
 // ── Types ──────────────────────────────────────────────
 interface CourseOutcomeOption {
@@ -81,8 +83,51 @@ export function QuestionPaperForm({
   const [mode, setMode] = useState<'edit' | 'preview'>('edit')
   const [saving, setSaving] = useState(false)
   const [saveResult, setSaveResult] = useState<{ success?: boolean; error?: string } | null>(null)
+  
+  const [activeStructure, setActiveStructure] = useState<CoStructure | null>(null)
+
+  useEffect(() => {
+    const fetchStructure = async () => {
+      const year = getSemesterYearMapping(semesterLabel)
+      const activeId = await getActiveStructure(departmentCode, year)
+      let struct = PREDEFINED_STRUCTURES.find(s => s.id === activeId)
+      if (!struct) {
+        const custom = await getCustomStructures(departmentCode)
+        struct = custom.find((s: CoStructure) => s.id === activeId)
+      }
+      if (!struct) struct = PREDEFINED_STRUCTURES[0]
+      setActiveStructure(struct)
+      
+      // If we don't have a unit test selected, select the first one and generate groups
+      if (!unitTest && struct.uts.length > 0) {
+        const firstUt = struct.uts[0]
+        setUnitTest(firstUt.name)
+        const newGroups = firstUt.questions.map(q => ({
+          main: [emptyQuestion(q.name)],
+          alternative: q.hasAlternative ? [emptyQuestion(q.name)] : []
+        }))
+        setGroups(newGroups)
+      }
+    }
+    fetchStructure()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [departmentCode, semesterLabel])
 
   const printRef = useRef<HTMLDivElement>(null)
+
+  const handleUTChange = (newUtName: string) => {
+    setUnitTest(newUtName)
+    if (activeStructure) {
+      const utCfg = activeStructure.uts.find(u => u.name === newUtName)
+      if (utCfg) {
+        const newGroups = utCfg.questions.map(q => ({
+          main: [emptyQuestion(q.name)],
+          alternative: q.hasAlternative ? [emptyQuestion(q.name)] : []
+        }))
+        setGroups(newGroups)
+      }
+    }
+  }
 
   // ── Helpers ──────────────────────────────────────────
   const updateQuestion = useCallback((
@@ -254,9 +299,11 @@ export function QuestionPaperForm({
       for (const q of group.main) {
         tableRows.push(makeQuestionRow(q))
       }
-      tableRows.push(makeOrRow())
-      for (const q of group.alternative) {
-        tableRows.push(makeQuestionRow(q))
+      if (group.alternative && group.alternative.length > 0) {
+        tableRows.push(makeOrRow())
+        for (const q of group.alternative) {
+          tableRows.push(makeQuestionRow(q))
+        }
       }
     }
 
@@ -742,7 +789,13 @@ export function QuestionPaperForm({
           fontWeight: 700,
         }}>
           <div>Sem: {renderInput(localSemester, setLocalSemester, semesterLabel, '60px')}</div>
-          <div>Unit Test: {renderInput(unitTest, setUnitTest, '____', '50px')}</div>
+          <div>Unit Test: {activeStructure ? renderSelect(
+            unitTest, 
+            handleUTChange, 
+            activeStructure.uts.map(u => ({ label: u.name, value: u.name })), 
+            'Select UT', 
+            '80px'
+          ) : renderInput(unitTest, handleUTChange, '____', '50px')}</div>
           <div>Date: {renderInput(date, setDate, '____', '80px')}</div>
           <div>Duration: {renderInput(duration, setDuration, '____', '60px')}</div>
         </div>
@@ -814,11 +867,15 @@ export function QuestionPaperForm({
             </tr>
           </thead>
           <tbody>
-            {groups.map((group, gi) => (
-              <Fragment key={gi}>
-                {group.main.map((q, qi) => renderQuestionRow(q, gi, 'main', qi))}
-                {renderOrRow()}
-                {group.alternative.map((q, qi) => renderQuestionRow(q, gi, 'alternative', qi))}
+            {groups.map((group, groupIdx) => (
+              <Fragment key={groupIdx}>
+                {group.main.map((q, qIdx) => renderQuestionRow(q, groupIdx, 'main', qIdx))}
+                {group.alternative && group.alternative.length > 0 && (
+                  <>
+                    {renderOrRow()}
+                    {group.alternative.map((q, qIdx) => renderQuestionRow(q, groupIdx, 'alternative', qIdx))}
+                  </>
+                )}
               </Fragment>
             ))}
           </tbody>

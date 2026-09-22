@@ -65,7 +65,10 @@ export default function LoginPage() {
                 <Image src="/bv-logo.png" alt="BV Logo" width={128} height={128} className="object-contain" />
               </div>
             </motion.div>
-            <h1 className="text-2xl font-bold text-foreground">Bharati Vidyapeeth</h1>
+            <h1 className="text-2xl font-bold text-foreground leading-tight">
+              Bharati Vidyapeeth
+              <span className="block text-lg font-semibold text-muted-foreground mt-1">Deemed to be University</span>
+            </h1>
             <p className="text-sm text-muted-foreground mt-1">Course Outcome Management</p>
           </div>
 

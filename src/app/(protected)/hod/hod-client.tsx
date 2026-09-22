@@ -8,9 +8,9 @@ import {
 } from 'lucide-react'
 import { hodRemoveFaculty, hodCreateSubject, hodDeleteSubject, hodUpdateSubject, hodCreateFaculty } from '@/app/actions/hod'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { toast } from 'sonner'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import Link from 'next/link'
 import { DepartmentDashboard } from '@/components/features/analytics/department-dashboard'
 import { CustomSelect } from '@/components/ui/custom-select'
@@ -131,11 +131,12 @@ export function HodDashboardClient({
   }
 
   const getSectionItems = (yearKey: string) => {
-    return sections[yearKey]?.map(sec => ({
+    const items = sections[yearKey]?.map(sec => ({
       key: `section-${sec.id}`,
       label: `Sec ${sec.name}`,
       onClick: () => setActiveTab(`section-${sec.id}`)
     })) || []
+    return items.length > 0 ? items : [{ key: `empty-${yearKey}`, label: 'No sections', onClick: () => {} }]
   }
 
   const customNavItems = [
@@ -304,6 +305,7 @@ function SectionTab({ section, department }: { section: any; department: { code:
 function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [assignmentToDelete, setAssignmentToDelete] = useState<string | null>(null)
   const router = useRouter()
 
   const filtered = faculty.filter(f =>
@@ -311,15 +313,16 @@ function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
     f.user.email.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const handleRemoveAssignment = async (assignmentId: string) => {
-    if (!confirm('Remove this faculty assignment?')) return
-    const result = await hodRemoveFaculty(assignmentId)
+  const confirmRemoveAssignment = async () => {
+    if (!assignmentToDelete) return
+    const result = await hodRemoveFaculty(assignmentToDelete)
     if (result.success) {
       toast.success('Faculty assignment removed')
       router.refresh()
     } else {
       toast.error(result.error || 'Failed')
     }
+    setAssignmentToDelete(null)
   }
 
   return (
@@ -381,7 +384,7 @@ function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
                         </span>
                       </div>
                       <button
-                        onClick={() => handleRemoveAssignment(a.id)}
+                        onClick={() => setAssignmentToDelete(a.id)}
                         className="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                         style={{ color: 'hsl(0, 72%, 51%)' }}
                         title="Remove assignment"
@@ -407,6 +410,16 @@ function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
       <AnimatePresence>
         {showAddModal && <HodAddFacultyModal onClose={() => setShowAddModal(false)} />}
       </AnimatePresence>
+
+      <ConfirmDialog 
+        isOpen={!!assignmentToDelete}
+        title="Remove Assignment"
+        description="Are you sure you want to remove this faculty assignment?"
+        isDanger={true}
+        confirmText="Remove"
+        onConfirm={confirmRemoveAssignment}
+        onCancel={() => setAssignmentToDelete(null)}
+      />
     </motion.div>
   )
 }
@@ -416,6 +429,7 @@ function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
 function SubjectsTab({ subjects }: { subjects: SubjectItem[] }) {
   const [addSubjectSem, setAddSubjectSem] = useState<number | null>(null)
   const [editingSubject, setEditingSubject] = useState<SubjectItem | null>(null)
+  const [subjectToDelete, setSubjectToDelete] = useState<string | null>(null)
   const router = useRouter()
 
   const allYears = subjects.flatMap(s => s.courseOfferings.map(o => o.academicContext.academicYear))
@@ -426,11 +440,12 @@ function SubjectsTab({ subjects }: { subjects: SubjectItem[] }) {
     if (semesterGroups[sub.semester]) semesterGroups[sub.semester].push(sub)
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this subject?')) return
-    const result = await hodDeleteSubject(id)
+  const confirmDelete = async () => {
+    if (!subjectToDelete) return
+    const result = await hodDeleteSubject(subjectToDelete)
     if (result.success) { toast.success('Subject deleted'); router.refresh() }
     else toast.error(result.error || 'Failed')
+    setSubjectToDelete(null)
   }
 
   return (
@@ -473,7 +488,7 @@ function SubjectsTab({ subjects }: { subjects: SubjectItem[] }) {
                         title="Edit">
                         <Edit3 className="w-3 h-3" />
                       </button>
-                      <button onClick={() => handleDelete(sub.id)}
+                      <button onClick={() => setSubjectToDelete(sub.id)}
                         className="p-1.5 rounded transition-colors duration-150 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
                         title="Delete">
                         <Trash2 className="w-3 h-3" />
@@ -517,6 +532,16 @@ function SubjectsTab({ subjects }: { subjects: SubjectItem[] }) {
         {addSubjectSem !== null && <HodAddSubjectModal semester={addSubjectSem} onClose={() => setAddSubjectSem(null)} />}
         {editingSubject && <HodEditSubjectModal subject={editingSubject} onClose={() => setEditingSubject(null)} />}
       </AnimatePresence>
+
+      <ConfirmDialog 
+        isOpen={!!subjectToDelete}
+        title="Delete Subject"
+        description="Are you sure you want to delete this subject? This action cannot be undone."
+        isDanger={true}
+        confirmText="Delete"
+        onConfirm={confirmDelete}
+        onCancel={() => setSubjectToDelete(null)}
+      />
     </motion.div>
   )
 }

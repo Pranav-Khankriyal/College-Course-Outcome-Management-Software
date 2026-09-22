@@ -223,34 +223,34 @@ export async function importMarksFromExcel(
   // Process each student
   let processedCount = 0
   for (const row of payload.students) {
-    // Create or find student
-    const student = await db.student.upsert({
-      where: { prn: row.rollNumber },
-      update: {}, // Don't overwrite name if it's a dummy from the template
-      create: {
-        prn: row.rollNumber,
-        name: row.name,
-        departmentId: offering.section.departmentId,
-      }
-    })
-
-    // Enroll student
-    await db.sectionEnrollment.upsert({
+    // Find enrollment
+    const enrollment = await db.sectionEnrollment.findFirst({
       where: {
-        studentId_sectionId_academicContextId: {
-          studentId: student.id,
-          sectionId: offering.sectionId,
-          academicContextId: offering.academicContextId,
-        }
-      },
-      update: {},
-      create: {
-        studentId: student.id,
+        rollNumber: row.rollNumber,
         sectionId: offering.sectionId,
         academicContextId: offering.academicContextId,
-        rollNumber: row.rollNumber,
-      }
+      },
+      include: { student: true }
     })
+
+    if (!enrollment) {
+      // Also try to find by PRN, just in case the excel used PRN
+      const altEnrollment = await db.sectionEnrollment.findFirst({
+        where: {
+          sectionId: offering.sectionId,
+          academicContextId: offering.academicContextId,
+          student: { prn: row.rollNumber }
+        },
+        include: { student: true }
+      })
+      
+      if (!altEnrollment) {
+        throw new Error(`Student with Roll Number / PRN "${row.rollNumber}" does not exist in the selected section and academic period. Please add the student to Student Management before importing marks.`)
+      }
+      var student = altEnrollment.student;
+    } else {
+      var student = enrollment.student;
+    }
 
     // Create/update marks for each question mapping
     for (const mark of row.marks) {

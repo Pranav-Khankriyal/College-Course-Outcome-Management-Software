@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import bcrypt from 'bcryptjs'
 import { revalidatePath } from 'next/cache'
+import * as xlsx from 'xlsx'
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions)
@@ -147,6 +148,96 @@ export async function createUser(data: {
   return { success: true, user: { id: user.id, name: user.name, email: user.email, role: user.role } }
 }
 
+export async function previewFacultyImport(base64Data: string) {
+  await requireAdmin()
+
+  const buffer = Buffer.from(base64Data, 'base64')
+  const workbook = xlsx.read(buffer, { type: 'buffer' })
+  const sheetName = workbook.SheetNames[0]
+  const worksheet = workbook.Sheets[sheetName]
+  const jsonData = xlsx.utils.sheet_to_json(worksheet)
+
+  let newFaculty = 0
+  let existingFaculty = 0
+  let invalidRows = 0
+  const parsedData: any[] = []
+  const seenEmails = new Set<string>()
+
+  for (const row of jsonData as any[]) {
+    const name = String(row['Name'] || row['Full Name'] || '').trim()
+    const email = String(row['Email'] || row['Email Address'] || '').trim().toLowerCase()
+    const role = String(row['Role'] || 'FACULTY').trim().toUpperCase()
+    const rawPassword = String(row['Password'] || 'faculty123').trim()
+
+    if (!name || !email) {
+      invalidRows++
+      continue
+    }
+
+    if (seenEmails.has(email)) {
+      continue
+    }
+    seenEmails.add(email)
+
+    const existingUser = await db.user.findUnique({
+      where: { email }
+    })
+
+    if (existingUser) {
+      existingFaculty++
+    } else {
+      newFaculty++
+    }
+
+    parsedData.push({
+      name,
+      email,
+      role: ['ADMIN', 'HOD', 'FACULTY'].includes(role) ? role : 'FACULTY',
+      password: rawPassword
+    })
+  }
+
+  return {
+    totalRows: jsonData.length,
+    newFaculty,
+    existingFaculty,
+    invalidRows,
+    parsedData
+  }
+}
+
+export async function confirmFacultyImport(parsedData: any[]) {
+  await requireAdmin()
+
+  for (const data of parsedData) {
+    const existing = await db.user.findUnique({ where: { email: data.email } })
+    
+    if (existing) {
+      await db.user.update({
+        where: { email: data.email },
+        data: {
+          name: data.name,
+          role: data.role as 'ADMIN' | 'HOD' | 'FACULTY'
+        }
+      })
+    } else {
+      const hashedPassword = await bcrypt.hash(data.password, 12)
+      await db.user.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          role: data.role as 'ADMIN' | 'HOD' | 'FACULTY',
+          hashedPassword,
+          isActive: true
+        }
+      })
+    }
+  }
+
+  revalidatePath('/admin')
+  return { success: true }
+}
+
 export async function updateUser(
   userId: string,
   data: { name?: string; email?: string; role?: 'ADMIN' | 'HOD' | 'FACULTY' }
@@ -159,6 +250,18 @@ export async function updateUser(
     })
     if (existing) {
       return { error: 'A user with this email already exists' }
+    }
+  }
+
+  if (data.role && data.role !== 'ADMIN') {
+    const user = await db.user.findUnique({ where: { id: userId } })
+    if (user && user.role === 'ADMIN') {
+      const otherAdmins = await db.user.count({
+        where: { role: 'ADMIN', isActive: true, id: { not: userId } }
+      })
+      if (otherAdmins === 0) {
+        return { error: 'Cannot remove the last active admin. Please promote another user first.' }
+      }
     }
   }
 
@@ -176,6 +279,15 @@ export async function toggleUserActive(userId: string) {
 
   const user = await db.user.findUnique({ where: { id: userId } })
   if (!user) return { error: 'User not found' }
+
+  if (user.isActive && user.role === 'ADMIN') {
+    const otherAdmins = await db.user.count({
+      where: { role: 'ADMIN', isActive: true, id: { not: userId } }
+    })
+    if (otherAdmins === 0) {
+      return { error: 'Cannot deactivate the last active admin. Please promote another user first.' }
+    }
+  }
 
   await db.user.update({
     where: { id: userId },
@@ -350,10 +462,14 @@ export async function promoteToAdmin(userId: string) {
 export async function demoteFromAdmin(userId: string) {
   await requireAdmin()
 
-  // Don't let the last admin demote themselves
-  const adminCount = await db.user.count({ where: { role: 'ADMIN' } })
-  if (adminCount <= 1) {
-    return { error: 'Cannot remove the last admin' }
+  const user = await db.user.findUnique({ where: { id: userId } })
+  if (user && user.role === 'ADMIN') {
+    const otherAdmins = await db.user.count({
+      where: { role: 'ADMIN', isActive: true, id: { not: userId } }
+    })
+    if (otherAdmins === 0) {
+      return { error: 'Cannot remove the last active admin. Please promote another user first.' }
+    }
   }
 
   await db.user.update({
