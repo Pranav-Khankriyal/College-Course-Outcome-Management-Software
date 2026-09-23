@@ -2,7 +2,7 @@
 
 import { AnalyticsData, YearKey } from '@/app/actions/analytics'
 import { useState } from 'react'
-import { YEAR_BG_COLORS, YEAR_COLORS } from './academic-year-legend'
+import { YEAR_COLORS } from './academic-year-legend'
 
 export function SubjectPerformance({ subjectPerformance }: { subjectPerformance: AnalyticsData['subjectPerformance'] }) {
   const years: YearKey[] = ['FY', 'SY', 'TY', 'Final Year']

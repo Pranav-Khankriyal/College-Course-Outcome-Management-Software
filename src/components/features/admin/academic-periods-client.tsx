@@ -10,11 +10,11 @@ import { AcademicPeriodStatus } from '@prisma/client'
 export function AcademicPeriodsClient({
   initialPeriods
 }: {
-  initialPeriods: any[]
+  initialPeriods: { id: string; academicYear: string; semester: string; term?: string | null; startDate?: Date | null; endDate?: Date | null; status: AcademicPeriodStatus }[]
 }) {
   const [periods, setPeriods] = useState(initialPeriods)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingPeriod, setEditingPeriod] = useState<any>(null)
+  const [editingPeriod, setEditingPeriod] = useState<{ id: string; academicYear: string; semester: string; term?: string | null; status: AcademicPeriodStatus } | null>(null)
   
   // form state
   const [academicYear, setAcademicYear] = useState('')
@@ -31,7 +31,7 @@ export function AcademicPeriodsClient({
     setIsModalOpen(true)
   }
 
-  const openEdit = (p: any) => {
+  const openEdit = (p: { id: string; academicYear: string; semester: string; term?: string | null; status: AcademicPeriodStatus }) => {
     setEditingPeriod(p)
     setAcademicYear(p.academicYear)
     setSemester(p.semester)
@@ -55,8 +55,8 @@ export function AcademicPeriodsClient({
       }
       setIsModalOpen(false)
       toast.success(editingPeriod ? 'Period updated successfully' : 'Period created successfully')
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to save period')
+    } catch (err: unknown) {
+      toast.error((err as Error).message || 'Failed to save period')
     }
   }
 
@@ -156,7 +156,7 @@ export function AcademicPeriodsClient({
                 <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
                 <select
                   value={status}
-                  onChange={e => setStatus(e.target.value as any)}
+                  onChange={e => setStatus(e.target.value as AcademicPeriodStatus)}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
                   <option value="UPCOMING">UPCOMING</option>

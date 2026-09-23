@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { FileSpreadsheet, Check, AlertCircle, Upload } from 'lucide-react'
+import { FileSpreadsheet, Check, AlertCircle } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { importMarksFromExcel } from '@/app/actions/marks'
 
@@ -10,7 +10,15 @@ export function ExcelUpload({ offeringId }: { offeringId: string }) {
   const [isDragging, setIsDragging] = useState(false)
   const [importMsg, setImportMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [loading, setLoading] = useState(false)
-  const [pendingPayload, setPendingPayload] = useState<any>(null)
+  const [pendingPayload, setPendingPayload] = useState<{
+    assessmentName: string;
+    questions: { col: number; coCode: string; questionName: string; maxMarks: number }[];
+    students: {
+      name: string;
+      rollNumber: string;
+      marks: { questionName: string; coCode: string; maxMarks: number; obtained: number }[];
+    }[];
+  } | null>(null)
 
   const parseExcelFile = async (file: File) => {
     setLoading(true)
@@ -21,7 +29,7 @@ export function ExcelUpload({ offeringId }: { offeringId: string }) {
         const data = new Uint8Array(e.target?.result as ArrayBuffer)
         const workbook = XLSX.read(data, { type: 'array' })
         const sheet = workbook.Sheets[workbook.SheetNames[0]]
-        const rows = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1 })
+        const rows = XLSX.utils.sheet_to_json<(string | number | undefined)[]>(sheet, { header: 1 })
 
         // Find the start of the table looking for "S.No."
         let headerRowIdx = -1;
@@ -112,17 +120,16 @@ export function ExcelUpload({ offeringId }: { offeringId: string }) {
             return
           }
 
-          const result = await importMarksFromExcel(offeringId, payload as any)
+          const result = await importMarksFromExcel(offeringId, payload) as { success: boolean; count?: number; error?: string }
           if (result.success) {
-            setImportMsg({ type: 'success', text: `Successfully updated marks for ${(result as any).count} students.` })
+            setImportMsg({ type: 'success', text: `Successfully updated marks for ${result.count} students.` })
           } else {
-            setImportMsg({ type: 'error', text: (result as any).error || 'Import failed. Please try again.' })
+            setImportMsg({ type: 'error', text: result.error || 'Import failed. Please try again.' })
           }
         } else {
           setImportMsg({ type: 'error', text: 'No student data found in the template.' })
         }
-      } catch (err) {
-        console.error(err)
+      } catch {
         setImportMsg({ type: 'error', text: 'Failed to parse Excel file. Please check the format.' })
       } finally {
         setLoading(false)
@@ -147,13 +154,13 @@ export function ExcelUpload({ offeringId }: { offeringId: string }) {
     setLoading(true)
     setPendingPayload(null)
     try {
-      const result = await importMarksFromExcel(offeringId, pendingPayload)
+      const result = await importMarksFromExcel(offeringId, pendingPayload) as { success: boolean; count?: number; error?: string }
       if (result.success) {
-        setImportMsg({ type: 'success', text: `Successfully updated marks for ${(result as any).count} students.` })
+        setImportMsg({ type: 'success', text: `Successfully updated marks for ${result.count} students.` })
       } else {
-        setImportMsg({ type: 'error', text: (result as any).error || 'Import failed. Please try again.' })
+        setImportMsg({ type: 'error', text: result.error || 'Import failed. Please try again.' })
       }
-    } catch (err) {
+    } catch {
       setImportMsg({ type: 'error', text: 'Import failed.' })
     } finally {
       setLoading(false)

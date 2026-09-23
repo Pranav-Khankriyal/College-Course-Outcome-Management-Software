@@ -11,7 +11,7 @@ async function main() {
   const hodPassword = await bcrypt.hash('hod123', 12)
   const facultyPassword = await bcrypt.hash('faculty123', 12)
 
-  const admin = await prisma.user.create({
+  await prisma.user.create({
     data: { email: 'admin@bvdu.edu.in', name: 'Dr. Admin', hashedPassword: adminPassword, role: 'ADMIN' }
   })
 
@@ -60,7 +60,7 @@ async function main() {
   const years = ['FY', 'SY', 'TY', 'Final Year'] as const
   const sectionNames = ['A', 'B']
 
-  const allSections: Record<string, any[]> = {}
+  const allSections: Record<string, { id: string; name: string; year: string; departmentId: string }[]> = {}
   for (const dept of [csbs, aiml, cse, it]) {
     allSections[dept.code] = []
     for (const year of years) {

@@ -25,7 +25,7 @@ export function UtPerformanceChart({ utPerformance }: { utPerformance: Analytics
 
   // Format data for Recharts: [{ name: 'UT1', FY: 75, SY: 80, ... }]
   const data = sortedAssessments.map(assessment => {
-    const dataPoint: any = { name: assessment }
+    const dataPoint: Record<string, string | number | null> = { name: assessment }
     years.forEach(year => {
       const val = utPerformance[year]?.[assessment]?.percentage
       dataPoint[year] = val !== null && val !== undefined ? val : null

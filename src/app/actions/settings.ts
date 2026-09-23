@@ -74,7 +74,7 @@ export async function deleteSection(id: string) {
     })
     revalidatePath('/', 'layout')
     return { success: true }
-  } catch (error) {
+  } catch {
     return { error: 'Cannot delete section. It may be in use.' }
   }
 }
@@ -103,9 +103,9 @@ export async function getCustomStructures(departmentIdOrCode?: string) {
   }
 }
 
-export async function saveCustomStructure(departmentId: string | undefined, structure: any) {
+export async function saveCustomStructure(departmentId: string | undefined, structure: { id: string; [key: string]: unknown }) {
   const customStr = await getCustomStructures(departmentId)
-  const existingIdx = customStr.findIndex((s: any) => s.id === structure.id)
+  const existingIdx = customStr.findIndex((s: { id: string }) => s.id === structure.id)
   
   if (existingIdx >= 0) {
     customStr[existingIdx] = structure
@@ -120,7 +120,7 @@ export async function saveCustomStructure(departmentId: string | undefined, stru
 
 export async function deleteCustomStructure(departmentId: string | undefined, structureId: string) {
   let customStr = await getCustomStructures(departmentId)
-  customStr = customStr.filter((s: any) => s.id !== structureId)
+  customStr = customStr.filter((s: { id: string }) => s.id !== structureId)
   await saveSetting('CUSTOM_CO_STRUCTURES', JSON.stringify(customStr), departmentId)
   revalidatePath('/', 'layout')
   return { success: true }

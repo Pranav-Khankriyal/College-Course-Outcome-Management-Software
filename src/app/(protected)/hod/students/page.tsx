@@ -13,7 +13,7 @@ export const metadata = {
 export default async function HodStudentsPage() {
   const session = await getServerSession(authOptions)
   if (!session) redirect('/login')
-  const user = session.user as any
+  const user = session.user as { role: string; id: string; name?: string }
 
   const departments = await db.department.findMany({
     where: { hodId: user.id }

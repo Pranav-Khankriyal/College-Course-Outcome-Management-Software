@@ -22,7 +22,7 @@ export default async function AdminStudentsPage() {
     <PageLayout
       role="ADMIN"
       activeTab="students"
-      userName={(session.user as any).name || 'Admin'}
+      userName={session.user?.name || 'Admin'}
       userRole="ADMIN"
       breadcrumbs={[{ label: 'Admin' }, { label: 'Student Master' }]}
     >

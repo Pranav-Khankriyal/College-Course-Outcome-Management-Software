@@ -2,9 +2,9 @@
 
 import { useState, useRef } from 'react'
 import { Card } from '@/components/ui/card'
-import { Plus, Upload, Search, FileText, UserCheck, CheckCircle, AlertCircle, History } from 'lucide-react'
+import { Plus, Upload, FileText, CheckCircle, AlertCircle, History } from 'lucide-react'
 import { toast } from 'sonner'
-import { getStudents, previewStudentImport, confirmStudentImport, addStudent, updateStudent, getStudentHistory } from '@/app/actions/students'
+import { getStudents, previewStudentImport, confirmStudentImport, getStudentHistory } from '@/app/actions/students'
 
 export function StudentsClient({
   departments,
@@ -13,9 +13,9 @@ export function StudentsClient({
   initialDepartmentId,
   role
 }: {
-  departments: any[],
-  academicContexts: any[],
-  sections: any[],
+  departments: { id: string; name: string }[],
+  academicContexts: { id: string; academicYear: string; semester: string; term: string }[],
+  sections: { id: string; name: string; year: string; departmentId: string }[],
   initialDepartmentId?: string,
   role: string
 }) {
@@ -23,34 +23,39 @@ export function StudentsClient({
   const [academicContextId, setAcademicContextId] = useState(academicContexts[0]?.id || '')
   const [sectionId, setSectionId] = useState('all')
 
-  const [enrollments, setEnrollments] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
+  const [enrollments, setEnrollments] = useState<{
+    rollNumber: string;
+    student: { id: string; prn: string; name: string; status: string };
+    section: { name: string; year: string };
+  }[]>([])
 
   // Modals
   const [isImportOpen, setIsImportOpen] = useState(false)
-  const [isAddOpen, setIsAddOpen] = useState(false)
-  const [isEditOpen, setIsEditOpen] = useState(false)
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
 
-  // Edit State
-  const [editingStudent, setEditingStudent] = useState<any>(null)
-  
   // History State
-  const [historyData, setHistoryData] = useState<any[]>([])
+  const [historyData, setHistoryData] = useState<{
+    rollNumber: string;
+    section: { name: string; year: string };
+    academicContext: { academicYear: string; semester: string; term: string };
+  }[]>([])
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [previewData, setPreviewData] = useState<any>(null)
+  const [previewData, setPreviewData] = useState<{
+    totalRows: number;
+    newStudents: number;
+    existingStudents: number;
+    invalidRows: number;
+    parsedData: unknown[];
+  } | null>(null)
 
   const fetchStudents = async () => {
     if (!departmentId || !academicContextId) return
-    setLoading(true)
     try {
       const data = await getStudents(departmentId, academicContextId, sectionId)
       setEnrollments(data)
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to fetch students')
-    } finally {
-      setLoading(false)
+    } catch (e: unknown) {
+      toast.error((e as Error).message || 'Failed to fetch students')
     }
   }
 
@@ -64,8 +69,8 @@ export function StudentsClient({
         const base64 = (event.target?.result as string).split(',')[1]
         const preview = await previewStudentImport(base64, departmentId, academicContextId, sectionId === 'all' ? undefined : sectionId)
         setPreviewData(preview)
-      } catch (err: any) {
-        toast.error('Import Error: ' + err.message)
+      } catch (err: unknown) {
+        toast.error('Import Error: ' + (err as Error).message)
       }
     }
     reader.readAsDataURL(file)
@@ -79,8 +84,8 @@ export function StudentsClient({
       setPreviewData(null)
       fetchStudents()
       toast.success('Students imported successfully')
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to import students')
+    } catch (err: unknown) {
+      toast.error((err as Error).message || 'Failed to import students')
     }
   }
 
@@ -89,8 +94,8 @@ export function StudentsClient({
       const hist = await getStudentHistory(studentId)
       setHistoryData(hist)
       setIsHistoryOpen(true)
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to load history')
+    } catch (err: unknown) {
+      toast.error((err as Error).message || 'Failed to load history')
     }
   }
 

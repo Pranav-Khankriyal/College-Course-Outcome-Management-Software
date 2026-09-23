@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, Fragment, useEffect } from 'react'
-import Image from 'next/image'
-import { FileDown, FileText, Save, Eye, Edit3, ChevronDown, Clock, Loader2 } from 'lucide-react'
+import { FileDown, FileText, Save, Eye, Edit3, Clock, Loader2 } from 'lucide-react'
 import { saveQuestionPaper, type QuestionPaperInput, type QuestionGroup, type QuestionData } from '@/app/actions/question-paper'
 import { DEPARTMENTS } from '@/lib/constants'
 import { getActiveStructure, getCustomStructures } from '@/app/actions/settings'
@@ -61,9 +60,7 @@ function defaultGroups(): QuestionGroup[] {
 export function QuestionPaperForm({
   offeringId,
   subjectName,
-  subjectCode,
   departmentCode,
-  semester,
   academicYear,
   semesterLabel,
   outcomes,
@@ -178,7 +175,7 @@ export function QuestionPaperForm({
   }
 
   const handleDownloadDocx = async () => {
-    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, ImageRun, HeadingLevel } = await import('docx')
+    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, ImageRun } = await import('docx')
     const { saveAs } = await import('file-saver')
 
     // Fetch the logo as an ArrayBuffer

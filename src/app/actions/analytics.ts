@@ -84,8 +84,6 @@ export async function getDepartmentAnalytics(departmentId: string, contextId?: s
 
   // Initialize empty structure
   const emptyYear = () => ({ passed: 0, total: 0, percentage: null })
-  const emptyCO = () => ({})
-  const emptyUT = () => ({})
   
   const data: AnalyticsData = {
     overview: {

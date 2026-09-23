@@ -14,9 +14,9 @@ export function PromotionClient({
   initialDepartmentId,
   role
 }: {
-  departments: any[],
-  academicContexts: any[],
-  sections: any[],
+  departments: { id: string; name: string }[],
+  academicContexts: { id: string; academicYear: string; semester: string; term: string }[],
+  sections: { id: string; name: string; year: string; departmentId: string }[],
   initialDepartmentId?: string,
   role: string
 }) {
@@ -26,7 +26,13 @@ export function PromotionClient({
   const [sectionId, setSectionId] = useState('all')
   const [autoUpgradeSections, setAutoUpgradeSections] = useState(true)
 
-  const [previewData, setPreviewData] = useState<any>(null)
+  const [previewData, setPreviewData] = useState<{
+    totalFound: number;
+    eligible: number;
+    held: number;
+    left: number;
+    enrollments: unknown[];
+  } | null>(null)
   const [loading, setLoading] = useState(false)
 
   const handlePreview = async () => {
@@ -38,8 +44,8 @@ export function PromotionClient({
     try {
       const data = await previewPromotion(sourceContextId, targetContextId, departmentId, sectionId)
       setPreviewData(data)
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to preview promotion')
+    } catch (err: unknown) {
+      toast.error((err as Error).message || 'Failed to preview promotion')
     } finally {
       setLoading(false)
     }
@@ -54,8 +60,8 @@ export function PromotionClient({
       toast.success(`Successfully promoted ${result.promotedCount} students!`)
       setPreviewData(null)
       setIsConfirmOpen(false)
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to promote students')
+    } catch (err: unknown) {
+      toast.error((err as Error).message || 'Failed to promote students')
     } finally {
       setLoading(false)
     }

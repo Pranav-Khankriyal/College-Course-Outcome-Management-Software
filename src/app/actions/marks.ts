@@ -233,7 +233,9 @@ export async function importMarksFromExcel(
       include: { student: true }
     })
 
-    if (!enrollment) {
+    let studentRecord: { id: string } | null = enrollment?.student ?? null;
+
+    if (!studentRecord) {
       // Also try to find by PRN, just in case the excel used PRN
       const altEnrollment = await db.sectionEnrollment.findFirst({
         where: {
@@ -247,9 +249,7 @@ export async function importMarksFromExcel(
       if (!altEnrollment) {
         throw new Error(`Student with Roll Number / PRN "${row.rollNumber}" does not exist in the selected section and academic period. Please add the student to Student Management before importing marks.`)
       }
-      var student = altEnrollment.student;
-    } else {
-      var student = enrollment.student;
+      studentRecord = altEnrollment.student;
     }
 
     // Create/update marks for each question mapping
@@ -260,13 +260,13 @@ export async function importMarksFromExcel(
       await db.studentMark.upsert({
         where: {
           studentId_assessmentQuestionId: {
-            studentId: student.id,
+            studentId: studentRecord.id,
             assessmentQuestionId: qId,
           }
         },
         update: { marksObtained: mark.obtained, isAbsent: false },
         create: {
-          studentId: student.id,
+          studentId: studentRecord.id,
           assessmentQuestionId: qId,
           marksObtained: mark.obtained,
           isAbsent: false,
@@ -285,7 +285,7 @@ export async function importMarksFromExcel(
 // ---- CO Attainment Summary ----
 
 export async function getAttainmentSummary(courseOfferingId: string) {
-  const session = await requireFacultyOrHod()
+  await requireFacultyOrHod()
 
   const marks = await db.studentMark.findMany({
     where: {

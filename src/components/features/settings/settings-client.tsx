@@ -1,12 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Settings, BookOpen, Layers, Save, Plus, Trash2, Loader2, Edit3, Copy, Check } from 'lucide-react'
+import { Settings, BookOpen, Layers, Save, Plus, Trash2, Loader2, Edit3, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { getSetting, saveSetting, getSectionsByYear, addSection, deleteSection, getCustomStructures, saveCustomStructure, deleteCustomStructure, getActiveStructure, setActiveStructure } from '@/app/actions/settings'
-import { DEPARTMENTS } from '@/lib/constants'
-import { PREDEFINED_STRUCTURES, CoStructure, UtConfig, QuestionPattern } from '@/lib/co-structures'
+import { PREDEFINED_STRUCTURES, CoStructure } from '@/lib/co-structures'
 
 interface SettingsClientProps {
   role: 'ADMIN' | 'HOD'
@@ -655,7 +654,7 @@ function CoStructureManager({ departmentId }: { departmentId?: string }) {
                   ))}
                   {(!editingStructure.uts || editingStructure.uts.length === 0) && (
                     <div className="text-center p-6 border border-dashed rounded-xl text-[13px] text-muted-foreground">
-                      No UTs configured. Click "Add UT" to start.
+                      No UTs configured. Click &quot;Add UT&quot; to start.
                     </div>
                   )}
                   {/* Add UT Button at the bottom for easier access */}

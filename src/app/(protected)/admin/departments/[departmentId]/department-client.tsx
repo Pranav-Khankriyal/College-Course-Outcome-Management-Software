@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Users, BookOpen, User, Plus, Trash2, Check, LayoutDashboard, Edit3, Mail, Building2, ExternalLink, ArrowRight, Save, X, Settings2, Trash, Upload, ChevronDown, GraduationCap, Search
+  Users, BookOpen, LayoutDashboard, Building2, GraduationCap, Search
 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Sidebar } from '@/components/layout/sidebar'
@@ -23,11 +23,11 @@ const cardVariants = {
 export function AdminDepartmentClient({
   overview, sections, faculty, subjects, academicContexts, activeContextId, analytics
 }: {
-  overview: any
-  sections: Record<string, any[]>
-  faculty: any[]
-  subjects: any[]
-  academicContexts: any[]
+  overview: { department: { id: string; name: string; code: string }; hodName: string; stats: { subjectCount: number; sectionCount: number; studentCount: number; facultyCount: number } }
+  sections: Record<string, { id: string; name: string; year: string; sectionEnrollments: { id: string; rollNumber: string; student: { name: string; prn: string } }[] }[]>
+  faculty: { user: { id: string; name: string; email: string }; assignments: { id: string; courseOffering: { subject: { code: string; name: string }; section: { year: string; name: string } } }[] }[]
+  subjects: { id: string; name: string; code: string; semester: number; courseOfferings: { id: string; academicContext: { academicYear: string }; section: { year: string; name: string }; assignments: { user: { id: string; name: string } }[] }[] }[]
+  academicContexts: { id: string; academicYear: string; semester: string }[]
   activeContextId: string | null
   analytics: AnalyticsData
 }) {
@@ -78,7 +78,7 @@ export function AdminDepartmentClient({
   if (activeTab.startsWith('section-')) {
     const secId = activeTab.replace('section-', '')
     for (const year of Object.values(sections)) {
-      const found = year.find((s: any) => s.id === secId)
+      const found = year.find((s) => s.id === secId)
       if (found) {
         activeSection = found
         breadcrumbLabel = `Sec ${found.name} (${found.year})`
@@ -116,7 +116,7 @@ export function AdminDepartmentClient({
           <CustomSelect
             value={activeContextId || ''}
             onChange={handleContextChange}
-            options={academicContexts.map((c: any) => ({
+            options={academicContexts.map((c) => ({
               value: c.id,
               label: `${c.academicYear} / ${c.semester.replace(' Semester', '')}`
             }))}
@@ -149,7 +149,7 @@ export function AdminDepartmentClient({
 
 // Component DashboardTab was replaced by DepartmentDashboard
 
-function SectionTab({ section, department }: { section: any; department: any }) {
+function SectionTab({ section, department }: { section: { name: string; year: string; sectionEnrollments: { id: string; rollNumber: string; student: { name: string; prn: string } }[] }; department: { code: string } }) {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.2 }} className="space-y-4">
@@ -179,7 +179,7 @@ function SectionTab({ section, department }: { section: any; department: any }) 
               </tr>
             </thead>
             <tbody>
-              {section.sectionEnrollments?.map((e: any, idx: number) => (
+              {section.sectionEnrollments?.map((e, idx: number) => (
                 <tr key={e.id} className="hover:bg-secondary/30 transition-colors duration-100"
                   style={{ borderBottom: '1px solid hsl(220, 14%, 93%)' }}>
                   <td className="px-4 py-2.5 text-[11px] text-muted-foreground">{idx + 1}</td>
@@ -203,7 +203,7 @@ function SectionTab({ section, department }: { section: any; department: any }) 
   )
 }
 
-function FacultyTab({ faculty }: { faculty: any[] }) {
+function FacultyTab({ faculty }: { faculty: { user: { id: string; name: string; email: string }; assignments: { id: string; courseOffering: { subject: { code: string; name: string }; section: { year: string; name: string } } }[] }[] }) {
   const [searchQuery, setSearchQuery] = useState('')
   const filtered = faculty.filter(f =>
     f.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -245,7 +245,7 @@ function FacultyTab({ faculty }: { faculty: any[] }) {
             <div className="px-5 py-3">
               {f.assignments.length > 0 ? (
                 <div className="space-y-1.5">
-                  {f.assignments.map((a: any) => (
+                  {f.assignments.map((a) => (
                     <div key={a.id} className="flex items-center gap-2 py-1.5 px-3 rounded text-[12px]"
                       style={{ backgroundColor: 'hsl(220, 17%, 96%)' }}>
                       <BookOpen className="w-3 h-3 text-muted-foreground flex-shrink-0" />
@@ -273,9 +273,9 @@ function FacultyTab({ faculty }: { faculty: any[] }) {
   )
 }
 
-function SubjectsTab({ subjects }: { subjects: any[] }) {
+function SubjectsTab({ subjects }: { subjects: { id: string; name: string; code: string; semester: number; courseOfferings: { id: string; academicContext: { academicYear: string }; section: { year: string; name: string }; assignments: { user: { id: string; name: string } }[] }[] }[] }) {
   const semesters = [1, 2, 3, 4, 5, 6, 7, 8]
-  const allYears = subjects.flatMap(s => s.courseOfferings.map((o: any) => o.academicContext.academicYear))
+  const allYears = subjects.flatMap(s => s.courseOfferings.map((o) => o.academicContext.academicYear))
   const latestYear = allYears.length > 0 ? allYears.sort().reverse()[0] : ''
 
   const semesterGroups: Record<number, typeof subjects> = {
@@ -306,19 +306,19 @@ function SubjectsTab({ subjects }: { subjects: any[] }) {
                     </div>
                     <div className="min-w-0">
                       <p className="text-[12px] font-semibold truncate">{sub.code} — {sub.name}</p>
-                      <p className="text-[11px] text-muted-foreground">{sub.courseOfferings.filter((o: any) => o.academicContext.academicYear === latestYear).length} offering{sub.courseOfferings.filter((o: any) => o.academicContext.academicYear === latestYear).length !== 1 ? 's' : ''}</p>
+                      <p className="text-[11px] text-muted-foreground">{sub.courseOfferings.filter((o) => o.academicContext.academicYear === latestYear).length} offering{sub.courseOfferings.filter((o) => o.academicContext.academicYear === latestYear).length !== 1 ? 's' : ''}</p>
                     </div>
                   </div>
-                  {sub.courseOfferings.filter((o: any) => o.academicContext.academicYear === latestYear).length > 0 && (
+                  {sub.courseOfferings.filter((o) => o.academicContext.academicYear === latestYear).length > 0 && (
                     <div className="space-y-1.5 pt-2 border-t border-border">
-                      {sub.courseOfferings.filter((o: any) => o.academicContext.academicYear === latestYear).map((o: any) => (
+                      {sub.courseOfferings.filter((o) => o.academicContext.academicYear === latestYear).map((o) => (
                         <div key={o.id} className="flex items-center justify-between text-[11px]">
                           <span className="text-muted-foreground font-medium">
                             {o.section.year} Sec {o.section.name}
                           </span>
                           <div>
                             {o.assignments.length > 0 ? (
-                              o.assignments.map((a: any) => (
+                              o.assignments.map((a) => (
                                 <span key={a.user.id} className="px-1.5 py-0.5 rounded text-[10px] font-medium"
                                   style={{ backgroundColor: 'hsl(142 70% 40% / 0.08)', color: 'hsl(142, 70%, 40%)' }}>
                                   {a.user.name}

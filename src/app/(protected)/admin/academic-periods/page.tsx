@@ -19,7 +19,7 @@ export default async function AcademicPeriodsPage() {
     <PageLayout
       role="ADMIN"
       activeTab="academic-periods"
-      userName={(session.user as any).name || 'Admin'}
+      userName={session.user?.name || 'Admin'}
       userRole="ADMIN"
       breadcrumbs={[{ label: 'Admin' }, { label: 'Academic Periods' }]}
     >

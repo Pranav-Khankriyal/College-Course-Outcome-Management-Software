@@ -6,7 +6,7 @@ export default async function HODSettingsPage() {
   let overview;
   try {
     overview = await getHodDepartmentOverview();
-  } catch (error) {
+  } catch {
     redirect('/login')
   }
 

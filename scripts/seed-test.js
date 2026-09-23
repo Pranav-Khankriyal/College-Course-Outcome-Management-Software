@@ -1,5 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -11,7 +11,7 @@ async function main() {
   const hodPwd = await bcrypt.hash('hod123', 10);
   const facultyPwd = await bcrypt.hash('faculty123', 10);
 
-  const admin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'admin@bvdu.edu.in' },
     update: {},
     create: {

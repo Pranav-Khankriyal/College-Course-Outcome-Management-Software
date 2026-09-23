@@ -10,7 +10,7 @@ export default async function AdminDepartmentPage(props: {
   searchParams: Promise<{ context?: string }>
 }) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user as any).role !== 'ADMIN') {
+  if (!session || (session.user as { role?: string }).role !== 'ADMIN') {
     redirect('/login')
   }
 
@@ -83,7 +83,7 @@ export default async function AdminDepartmentPage(props: {
     orderBy: [{ year: 'asc' }, { name: 'asc' }],
   })
 
-  const sections: Record<string, any[]> = {}
+  const sections: Record<string, typeof sectionsData[0][]> = {}
   for (const sec of sectionsData) {
     if (!sections[sec.year]) sections[sec.year] = []
     sections[sec.year].push(sec)
@@ -104,7 +104,7 @@ export default async function AdminDepartmentPage(props: {
     }
   })
 
-  const facultyMap: Record<string, any> = {}
+  const facultyMap: Record<string, { user: typeof allAssignments[0]['user'], assignments: typeof allAssignments }> = {}
   for (const a of allAssignments) {
     if (!facultyMap[a.userId]) {
       facultyMap[a.userId] = { user: a.user, assignments: [] }

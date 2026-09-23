@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache'
 async function requireAdminOrHod() {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error('Unauthorized')
-  const user = session.user as any
+  const user = session.user as { role: string; id: string }
   if (user.role === 'ADMIN' || user.role === 'HOD') return user
   throw new Error('Unauthorized')
 }
@@ -58,7 +58,7 @@ export async function previewPromotion(
 ) {
   await requireAdminOrHod()
 
-  const whereClause: any = {
+  const whereClause: Record<string, unknown> = {
     academicContextId: sourceAcademicContextId,
     section: { departmentId }
   }

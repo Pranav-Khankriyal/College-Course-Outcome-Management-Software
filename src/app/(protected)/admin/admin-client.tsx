@@ -3,13 +3,13 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Building2, Users, BookOpen, Shield, GraduationCap,
+  Building2, BookOpen, Shield,
   UserPlus, Edit3, ToggleLeft, ToggleRight, KeyRound, Mail, User, Eye, EyeOff, X, Check, Search,
-  UserCog, Plus, Trash2, ArrowRight, Upload, FileText, AlertCircle, CheckCircle
+  Plus, Trash2, ArrowRight, Upload, FileText, AlertCircle, CheckCircle
 } from 'lucide-react'
 import {
   createUser, updateUser, toggleUserActive, resetUserPassword,
-  createSubject, updateSubject, deleteSubject,
+  createSubject, deleteSubject,
   promoteToAdmin, demoteFromAdmin,
   previewFacultyImport, confirmFacultyImport
 } from '@/app/actions/admin'
@@ -111,7 +111,7 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
 // ---- Main Component ----
 
 export function AdminDashboardClient({
-  stats, departments, users, academicContexts,
+  departments, users,
 }: {
   stats: Stats
   departments: Department[]
@@ -209,7 +209,7 @@ function UsersTab({ users }: { users: UserItem[] }) {
   const [userToPromote, setUserToPromote] = useState<string | null>(null)
   const [userToDemote, setUserToDemote] = useState<string | null>(null)
   const [isImportOpen, setIsImportOpen] = useState(false)
-  const [previewData, setPreviewData] = useState<any>(null)
+  const [previewData, setPreviewData] = useState<{ parsedData: unknown[]; totalRows: number; newFaculty: number; existingFaculty: number; invalidRows: number } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
@@ -255,8 +255,8 @@ function UsersTab({ users }: { users: UserItem[] }) {
         const base64 = (event.target?.result as string).split(',')[1]
         const preview = await previewFacultyImport(base64)
         setPreviewData(preview)
-      } catch (err: any) {
-        toast.error('Import Error: ' + err.message)
+      } catch (err: unknown) {
+        toast.error('Import Error: ' + (err as Error).message)
       }
     }
     reader.readAsDataURL(file)
@@ -270,8 +270,8 @@ function UsersTab({ users }: { users: UserItem[] }) {
       setPreviewData(null)
       router.refresh()
       toast.success('Faculty imported successfully')
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to import faculty')
+    } catch (err: unknown) {
+      toast.error((err as Error).message || 'Failed to import faculty')
     }
   }
 

@@ -1,5 +1,4 @@
-const xlsx = require('xlsx');
-const fs = require('fs');
+import xlsx from 'xlsx';
 
 const generateMockExcel = () => {
   const data = [

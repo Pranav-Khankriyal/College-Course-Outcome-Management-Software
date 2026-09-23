@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Users, BookOpen, GraduationCap, Search, X,
-  User, Plus, Trash2, Check, LayoutDashboard, Edit3, Mail, Building2, ChevronDown
+  User, Plus, Trash2, Check, LayoutDashboard, Edit3, Mail, Building2
 } from 'lucide-react'
 import { hodRemoveFaculty, hodRemoveFacultyFromDepartment, hodCreateSubject, hodDeleteSubject, hodUpdateSubject, hodCreateFaculty } from '@/app/actions/hod'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -22,10 +22,10 @@ import { AnalyticsData } from '@/app/actions/analytics'
 type Overview = {
   department: { id: string; name: string; code: string }
   stats: { subjectCount: number; sectionCount: number; studentCount: number; facultyCount: number }
-  yearGroups: Record<string, { sections: any[]; studentCount: number; subjectCount: number }>
+  yearGroups: Record<string, { sections: { id: string; name: string; year: string; sectionEnrollments: { id: string; rollNumber: string; student: { name: string; prn: string } }[] }[]; studentCount: number; subjectCount: number }>
 }
 
-type SectionsGrouped = Record<string, any[]>
+type SectionsGrouped = Record<string, { id: string; name: string; year: string; sectionEnrollments: { id: string; rollNumber: string; student: { name: string; prn: string } }[] }[]>
 
 type FacultyItem = {
   user: { id: string; name: string; email: string; role: string; isActive: boolean }
@@ -90,20 +90,7 @@ function ModalBackdrop({ onClose, children }: { onClose: () => void; children: R
   )
 }
 
-function StatusBadge({ isActive }: { isActive: boolean }) {
-  return (
-    <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold"
-      style={isActive
-        ? { backgroundColor: 'hsl(142 70% 40% / 0.1)', color: 'hsl(142, 70%, 40%)' }
-        : { backgroundColor: 'hsl(0 72% 51% / 0.08)', color: 'hsl(0, 72%, 51%)' }
-      }
-    >
-      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'currentColor' }} />
-      {isActive ? 'Active' : 'Inactive'}
-    </span>
-  )
-}
+
 
 // ---- Main Component ----
 
@@ -117,7 +104,7 @@ export function HodDashboardClient({
   ownSubjects: OwnSubject[]
   analytics: AnalyticsData
   hodName: string
-  academicContexts: any[]
+  academicContexts: { id: string; academicYear: string; semester: string }[]
   activeContextId: string | null
 }) {
   const [activeTab, setActiveTab] = useState<string>('dashboard')
@@ -206,7 +193,7 @@ export function HodDashboardClient({
           <CustomSelect
             value={activeContextId || ''}
             onChange={handleContextChange}
-            options={academicContexts.map((c: any) => ({
+            options={academicContexts.map((c) => ({
               value: c.id,
               label: `${c.academicYear} / ${c.semester.replace(' Semester', '')}`
             }))}
@@ -242,7 +229,7 @@ export function HodDashboardClient({
 
 // ---- Section Tab ----
 
-function SectionTab({ section, department }: { section: any; department: { code: string; [key: string]: any } }) {
+function SectionTab({ section, department }: { section: { name: string; year: string; sectionEnrollments: { id: string; rollNumber: string; student: { name: string; prn: string } }[] }; department: { code: string; [key: string]: unknown } }) {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.2 }} className="space-y-4">
@@ -273,7 +260,7 @@ function SectionTab({ section, department }: { section: any; department: { code:
               </tr>
             </thead>
             <tbody>
-              {section.sectionEnrollments?.map((e: any, idx: number) => (
+              {section.sectionEnrollments?.map((e: { id: string; rollNumber: string; student: { name: string; prn: string } }, idx: number) => (
                 <tr key={e.id} className="hover:bg-secondary/30 transition-colors duration-100"
                   style={{ borderBottom: '1px solid hsl(220, 14%, 93%)' }}>
                   <td className="px-4 py-2.5 text-[11px] text-muted-foreground">{idx + 1}</td>
@@ -325,8 +312,8 @@ function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
       } else {
         toast.error(result.error || 'Failed')
       }
-    } catch (e: any) {
-      toast.error(e.message || 'An unexpected error occurred')
+    } catch (e: unknown) {
+      toast.error((e as Error).message || 'An unexpected error occurred')
     } finally {
       setAssignmentToDelete(null)
     }
@@ -342,8 +329,8 @@ function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
       } else {
         toast.error(result.error || 'Failed')
       }
-    } catch (e: any) {
-      toast.error(e.message || 'An unexpected error occurred')
+    } catch (e: unknown) {
+      toast.error((e as Error).message || 'An unexpected error occurred')
     } finally {
       setFacultyToRemove(null)
     }
@@ -706,7 +693,7 @@ function HodAddSubjectModal({ semester, onClose }: { semester: number; onClose: 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    const result = await hodCreateSubject({ name, code, semester } as any)
+    const result = await hodCreateSubject({ name, code, semester } as unknown as Parameters<typeof hodCreateSubject>[0])
     setLoading(false)
     if (result.error) toast.error(result.error)
     else { toast.success('Subject created'); router.refresh(); onClose() }
@@ -755,7 +742,7 @@ function HodEditSubjectModal({ subject, onClose }: { subject: SubjectItem; onClo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    const result = await hodUpdateSubject(subject.id, { name, code, semester } as any)
+    const result = await hodUpdateSubject(subject.id, { name, code, semester } as unknown as Parameters<typeof hodUpdateSubject>[1])
     setLoading(false)
     if (result.error) toast.error(result.error)
     else { toast.success('Subject updated'); router.refresh(); onClose() }

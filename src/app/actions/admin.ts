@@ -160,10 +160,10 @@ export async function previewFacultyImport(base64Data: string) {
   let newFaculty = 0
   let existingFaculty = 0
   let invalidRows = 0
-  const parsedData: any[] = []
+  const parsedData: { name: string; email: string; role: string; password: string }[] = []
   const seenEmails = new Set<string>()
 
-  for (const row of jsonData as any[]) {
+  for (const row of jsonData as Record<string, string | number>[]) {
     const name = String(row['Name'] || row['Full Name'] || '').trim()
     const email = String(row['Email'] || row['Email Address'] || '').trim().toLowerCase()
     const role = String(row['Role'] || 'FACULTY').trim().toUpperCase()
@@ -206,7 +206,7 @@ export async function previewFacultyImport(base64Data: string) {
   }
 }
 
-export async function confirmFacultyImport(parsedData: any[]) {
+export async function confirmFacultyImport(parsedData: { name: string; email: string; role: string; password: string }[]) {
   await requireAdmin()
 
   for (const data of parsedData) {

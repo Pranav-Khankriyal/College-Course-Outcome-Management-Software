@@ -10,7 +10,7 @@ import { revalidatePath } from 'next/cache'
 async function requireAdminOrHod(departmentId?: string) {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error('Unauthorized')
-  const user = session.user as any
+  const user = session.user as { role: string; id: string }
   if (user.role === 'ADMIN') return user
   if (user.role === 'HOD') {
     if (departmentId) {
@@ -27,7 +27,7 @@ async function requireAdminOrHod(departmentId?: string) {
 export async function getStudents(departmentId: string, academicContextId: string, sectionId?: string) {
   await requireAdminOrHod(departmentId)
   
-  const whereClause: any = {
+  const whereClause: Record<string, unknown> = {
     academicContextId,
     section: { departmentId }
   }
@@ -65,10 +65,10 @@ export async function previewStudentImport(
   let existingStudents = 0
   let duplicatesInFile = 0
   let invalidRows = 0
-  const parsedData: any[] = []
+  const parsedData: { prn: string; name: string; rollNumber: string; email: string; sectionName?: string }[] = []
   const seenPrns = new Set<string>()
 
-  for (const row of jsonData as any[]) {
+  for (const row of jsonData as Record<string, string | number>[]) {
     const prn = String(row['Enrollment Number'] || row['PRN'] || '').trim()
     const name = String(row['Student Name'] || row['Name'] || '').trim()
     const rollNumber = String(row['Roll Number'] || row['Roll No'] || '').trim()
@@ -116,14 +116,14 @@ export async function previewStudentImport(
 }
 
 export async function confirmStudentImport(
-  parsedData: any[],
+  parsedData: { prn: string; name: string; rollNumber: string; email: string; sectionName?: string }[],
   departmentId: string,
   academicContextId: string,
   sectionId?: string
 ) {
   await requireAdminOrHod(departmentId)
 
-  let sections: Record<string, string> = {}
+  const sections: Record<string, string> = {}
   
   if (sectionId && sectionId !== 'all') {
     sections['default'] = sectionId
