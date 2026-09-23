@@ -160,7 +160,7 @@ export async function previewFacultyImport(base64Data: string) {
   let newFaculty = 0
   let existingFaculty = 0
   let invalidRows = 0
-  const parsedData: { name: string; email: string; role: string; password: string }[] = []
+  const parsedData: { name: string; email: string; role: string; password: string; subjectCode?: string }[] = []
   const seenEmails = new Set<string>()
 
   for (const row of jsonData as Record<string, string | number>[]) {
@@ -189,11 +189,14 @@ export async function previewFacultyImport(base64Data: string) {
       newFaculty++
     }
 
+    const subjectCode = String(row['Subject Code'] || row['SubjectCode'] || row['Subject'] || '').trim().toUpperCase()
+
     parsedData.push({
       name,
       email,
       role: ['ADMIN', 'HOD', 'FACULTY'].includes(role) ? role : 'FACULTY',
-      password: rawPassword
+      password: rawPassword,
+      subjectCode: subjectCode || undefined,
     })
   }
 
@@ -206,7 +209,7 @@ export async function previewFacultyImport(base64Data: string) {
   }
 }
 
-export async function confirmFacultyImport(parsedData: { name: string; email: string; role: string; password: string }[]) {
+export async function confirmFacultyImport(parsedData: { name: string; email: string; role: string; password: string; subjectCode?: string }[]) {
   await requireAdmin()
 
   for (const data of parsedData) {
@@ -231,6 +234,68 @@ export async function confirmFacultyImport(parsedData: { name: string; email: st
           isActive: true
         }
       })
+    }
+  }
+
+  revalidatePath('/admin')
+  return { success: true }
+}
+
+export async function confirmDepartmentFacultyImport(
+  parsedData: { name: string; email: string; role: string; password: string; subjectCode?: string }[],
+  options?: { departmentId?: string; defaultOfferingId?: string }
+) {
+  await requireAdmin()
+
+  for (const data of parsedData) {
+    const cleanEmail = data.email.trim().toLowerCase()
+    let user = await db.user.findUnique({ where: { email: cleanEmail } })
+
+    if (user) {
+      user = await db.user.update({
+        where: { email: cleanEmail },
+        data: {
+          name: data.name.trim(),
+          role: (data.role as 'ADMIN' | 'HOD' | 'FACULTY') || 'FACULTY'
+        }
+      })
+    } else {
+      const hashedPassword = await bcrypt.hash(data.password || 'faculty123', 12)
+      user = await db.user.create({
+        data: {
+          name: data.name.trim(),
+          email: cleanEmail,
+          role: (data.role as 'ADMIN' | 'HOD' | 'FACULTY') || 'FACULTY',
+          hashedPassword,
+          isActive: true
+        }
+      })
+    }
+
+    // Determine offering assignment
+    let targetOfferingId = options?.defaultOfferingId
+
+    if (data.subjectCode && options?.departmentId) {
+      const offering = await db.courseOffering.findFirst({
+        where: {
+          subject: {
+            code: { equals: data.subjectCode, mode: 'insensitive' },
+            departmentId: options.departmentId,
+          }
+        }
+      })
+      if (offering) targetOfferingId = offering.id
+    }
+
+    if (targetOfferingId) {
+      const existingAssignment = await db.facultyAssignment.findFirst({
+        where: { userId: user.id, courseOfferingId: targetOfferingId }
+      })
+      if (!existingAssignment) {
+        await db.facultyAssignment.create({
+          data: { userId: user.id, courseOfferingId: targetOfferingId }
+        })
+      }
     }
   }
 
@@ -363,6 +428,41 @@ export async function createSubject(data: {
 
   const subject = await db.subject.create({ data })
 
+  // Auto-create course offerings for existing sections matching this semester's year
+  const semToYear: Record<number, string> = {
+    1: 'FY', 2: 'FY',
+    3: 'SY', 4: 'SY',
+    5: 'TY', 6: 'TY',
+    7: 'Final Year', 8: 'Final Year'
+  }
+  const targetYear = semToYear[data.semester] || 'FY'
+
+  try {
+    const [sections, contexts] = await Promise.all([
+      db.section.findMany({
+        where: { departmentId: data.departmentId, year: targetYear }
+      }),
+      db.academicContext.findMany({
+        take: 2,
+        orderBy: { academicYear: 'desc' }
+      })
+    ])
+
+    for (const context of contexts) {
+      for (const section of sections) {
+        await db.courseOffering.create({
+          data: {
+            subjectId: subject.id,
+            sectionId: section.id,
+            academicContextId: context.id,
+          }
+        }).catch(() => {})
+      }
+    }
+  } catch (err) {
+    console.error('Failed to auto-generate offerings:', err)
+  }
+
   revalidatePath('/admin')
   return { success: true, subject }
 }
@@ -379,11 +479,30 @@ export async function updateSubject(subjectId: string, data: { name?: string; co
 export async function deleteSubject(subjectId: string) {
   await requireAdmin()
 
-  // Check for existing course offerings
-  const offerings = await db.courseOffering.count({ where: { subjectId } })
-  if (offerings > 0) {
-    return { error: 'Cannot delete subject with existing course offerings. Remove offerings first.' }
+  // Check for existing marks or internal assessments
+  const [marksCount, assessmentsCount] = await Promise.all([
+    db.studentMark.count({
+      where: { assessmentQuestion: { assessment: { courseOffering: { subjectId } } } }
+    }),
+    db.assessment.count({
+      where: { courseOffering: { subjectId } }
+    })
+  ])
+
+  if (marksCount > 0 || assessmentsCount > 0) {
+    return { error: 'Cannot delete subject because student marks or assessments are already recorded for it.' }
   }
+
+  // Safe to clean up empty assignments, question papers, and offerings
+  await db.facultyAssignment.deleteMany({
+    where: { courseOffering: { subjectId } }
+  })
+  await db.questionPaper.deleteMany({
+    where: { courseOffering: { subjectId } }
+  })
+  await db.courseOffering.deleteMany({
+    where: { subjectId }
+  })
 
   await db.subject.delete({ where: { id: subjectId } })
 
@@ -392,6 +511,48 @@ export async function deleteSubject(subjectId: string) {
 }
 
 // ---- Faculty Assignment ----
+
+export async function createAndAssignFaculty(data: {
+  name: string
+  email: string
+  password?: string
+  courseOfferingId?: string
+}): Promise<{ success: true; user: { id: string; name: string; email: string } } | { error: string }> {
+  try {
+    await requireAdmin()
+
+    const cleanEmail = data.email.trim().toLowerCase()
+    let user = await db.user.findUnique({ where: { email: cleanEmail } })
+    if (!user) {
+      const hashedPassword = await bcrypt.hash(data.password || 'faculty123', 12)
+      user = await db.user.create({
+        data: {
+          name: data.name.trim(),
+          email: cleanEmail,
+          hashedPassword,
+          role: 'FACULTY',
+          isActive: true,
+        }
+      })
+    }
+
+    if (data.courseOfferingId) {
+      const existing = await db.facultyAssignment.findFirst({
+        where: { userId: user.id, courseOfferingId: data.courseOfferingId }
+      })
+      if (!existing) {
+        await db.facultyAssignment.create({
+          data: { userId: user.id, courseOfferingId: data.courseOfferingId }
+        })
+      }
+    }
+
+    revalidatePath('/admin')
+    return { success: true, user: { id: user.id, name: user.name, email: user.email } }
+  } catch (e) {
+    return { error: (e as Error).message || 'Failed to create or assign faculty' }
+  }
+}
 
 export async function assignFacultyToOffering(userId: string, courseOfferingId: string) {
   await requireAdmin()

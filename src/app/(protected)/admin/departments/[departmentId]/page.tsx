@@ -131,7 +131,31 @@ export default async function AdminDepartmentPage(props: {
     orderBy: { code: 'asc' },
   })
 
-  const analytics = await getDepartmentAnalytics(departmentId)
+  const [allFacultyUsers, departmentOfferings, analytics] = await Promise.all([
+    db.user.findMany({
+      where: { role: 'FACULTY', isActive: true },
+      select: { id: true, name: true, email: true },
+      orderBy: { name: 'asc' }
+    }),
+    db.courseOffering.findMany({
+      where: {
+        section: { departmentId },
+        ...(activeContext ? { academicContextId: activeContext.id } : {})
+      },
+      include: {
+        subject: { select: { id: true, name: true, code: true } },
+        section: { select: { id: true, name: true, year: true } },
+        assignments: {
+          include: { user: { select: { id: true, name: true, email: true } } }
+        }
+      },
+      orderBy: [
+        { section: { year: 'asc' } },
+        { subject: { code: 'asc' } }
+      ]
+    }),
+    getDepartmentAnalytics(departmentId)
+  ])
 
   return (
     <AdminDepartmentClient 
@@ -142,6 +166,8 @@ export default async function AdminDepartmentPage(props: {
       academicContexts={academicContexts}
       activeContextId={activeContext?.id || null}
       analytics={analytics}
+      allFacultyUsers={allFacultyUsers}
+      departmentOfferings={departmentOfferings}
     />
   )
 }

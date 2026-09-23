@@ -209,7 +209,7 @@ function UsersTab({ users }: { users: UserItem[] }) {
   const [userToPromote, setUserToPromote] = useState<string | null>(null)
   const [userToDemote, setUserToDemote] = useState<string | null>(null)
   const [isImportOpen, setIsImportOpen] = useState(false)
-  const [previewData, setPreviewData] = useState<{ parsedData: unknown[]; totalRows: number; newFaculty: number; existingFaculty: number; invalidRows: number } | null>(null)
+  const [previewData, setPreviewData] = useState<Awaited<ReturnType<typeof previewFacultyImport>> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
