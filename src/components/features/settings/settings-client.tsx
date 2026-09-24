@@ -349,7 +349,7 @@ function CoStructureManager({ departmentId }: { departmentId?: string }) {
       numberOfUts: editingStructure.uts.length,
       uts: editingStructure.uts,
     }
-    await saveCustomStructure(departmentId, struct)
+    await saveCustomStructure(departmentId, struct as unknown as { id: string; [key: string]: unknown })
     const updated = await getCustomStructures(departmentId)
     setCustomStructures(updated)
     setShowBuilder(false)

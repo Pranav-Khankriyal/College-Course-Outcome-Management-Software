@@ -2,9 +2,9 @@
 
 import { useState, useRef } from 'react'
 import { Card } from '@/components/ui/card'
-import { Plus, Upload, FileText, CheckCircle, AlertCircle, History } from 'lucide-react'
+import { Plus, Upload, FileText, CheckCircle, AlertCircle, History, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { getStudents, previewStudentImport, confirmStudentImport, getStudentHistory } from '@/app/actions/students'
+import { getStudents, previewStudentImport, confirmStudentImport, getStudentHistory, addStudent } from '@/app/actions/students'
 
 export function StudentsClient({
   departments,
@@ -14,7 +14,7 @@ export function StudentsClient({
   role
 }: {
   departments: { id: string; name: string }[],
-  academicContexts: { id: string; academicYear: string; semester: string; term: string }[],
+  academicContexts: { id: string; academicYear: string; semester: string; term?: string | null }[],
   sections: { id: string; name: string; year: string; departmentId: string }[],
   initialDepartmentId?: string,
   role: string
@@ -32,12 +32,19 @@ export function StudentsClient({
   // Modals
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+  const [isAddOpen, setIsAddOpen] = useState(false)
+  const [newPrn, setNewPrn] = useState('')
+  const [newName, setNewName] = useState('')
+  const [newEmail, setNewEmail] = useState('')
+  const [newRoll, setNewRoll] = useState('')
+  const [newSectionId, setNewSectionId] = useState('')
+  const [addLoading, setAddLoading] = useState(false)
 
   // History State
   const [historyData, setHistoryData] = useState<{
     rollNumber: string;
     section: { name: string; year: string };
-    academicContext: { academicYear: string; semester: string; term: string };
+    academicContext: { academicYear: string; semester: string; term?: string | null };
   }[]>([])
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -46,7 +53,7 @@ export function StudentsClient({
     newStudents: number;
     existingStudents: number;
     invalidRows: number;
-    parsedData: unknown[];
+    parsedData: { prn: string; name: string; rollNumber: string; email: string; sectionName?: string }[];
   } | null>(null)
 
   const fetchStudents = async () => {
@@ -96,6 +103,42 @@ export function StudentsClient({
       setIsHistoryOpen(true)
     } catch (err: unknown) {
       toast.error((err as Error).message || 'Failed to load history')
+    }
+  }
+
+  const handleAddStudent = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newPrn || !newName || !newRoll || !departmentId || !academicContextId) {
+      toast.error('Please fill in all required fields.')
+      return
+    }
+    const targetSec = newSectionId || (sections.filter(s => s.departmentId === departmentId)[0]?.id)
+    if (!targetSec) {
+      toast.error('Please select a valid section.')
+      return
+    }
+    setAddLoading(true)
+    try {
+      await addStudent({
+        prn: newPrn,
+        name: newName,
+        email: newEmail,
+        rollNumber: newRoll,
+        departmentId,
+        academicContextId,
+        sectionId: targetSec
+      })
+      toast.success('Student added successfully')
+      setIsAddOpen(false)
+      setNewPrn('')
+      setNewName('')
+      setNewEmail('')
+      setNewRoll('')
+      fetchStudents()
+    } catch (err: unknown) {
+      toast.error((err as Error).message || 'Failed to add student')
+    } finally {
+      setAddLoading(false)
     }
   }
 
@@ -348,6 +391,101 @@ export function StudentsClient({
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADD STUDENT MODAL */}
+      {isAddOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-100 text-slate-900">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+                <Plus className="w-4 h-4 text-indigo-500" />
+                Add Student
+              </h3>
+              <button onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600">×</button>
+            </div>
+            
+            <form onSubmit={handleAddStudent} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">PRN Number *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 2102001"
+                  value={newPrn}
+                  onChange={e => setNewPrn(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Aryan Sharma"
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Roll Number *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 101"
+                  value={newRoll}
+                  onChange={e => setNewRoll(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Email Address</label>
+                <input
+                  type="email"
+                  placeholder="e.g. aryan@college.edu"
+                  value={newEmail}
+                  onChange={e => setNewEmail(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Section</label>
+                <select
+                  value={newSectionId}
+                  onChange={e => setNewSectionId(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                >
+                  <option value="">Select Section</option>
+                  {sections.filter(s => s.departmentId === departmentId).map(s => (
+                    <option key={s.id} value={s.id}>{s.name} ({s.year})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddOpen(false)}
+                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addLoading}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                >
+                  {addLoading ? 'Adding...' : 'Add Student'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
