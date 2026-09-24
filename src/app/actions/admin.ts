@@ -686,7 +686,13 @@ export async function createSection(data: {
 export async function getAcademicContexts() {
   await requireAdmin()
 
-  return db.academicContext.findMany({ orderBy: { academicYear: 'desc' } })
+  return db.academicContext.findMany({ 
+    where: { academicYear: { gte: '2024-25' } },
+    orderBy: [
+      { academicYear: 'desc' },
+      { term: 'asc' }
+    ] 
+  })
 }
 
 // ---- Department Semester Details ----

@@ -22,7 +22,7 @@ import { AnalyticsData } from '@/app/actions/analytics'
 type Overview = {
   department: { id: string; name: string; code: string }
   stats: { subjectCount: number; sectionCount: number; studentCount: number; facultyCount: number }
-  yearGroups: Record<string, { sections: { id: string; name: string; year: string; sectionEnrollments: { id: string; rollNumber: string; student: { name: string; prn: string } }[] }[]; studentCount: number; subjectCount: number }>
+  yearGroups?: Record<string, unknown>
 }
 
 type SectionsGrouped = Record<string, { id: string; name: string; year: string; sectionEnrollments: { id: string; rollNumber: string; student: { name: string; prn: string } }[] }[]>
@@ -104,7 +104,7 @@ export function HodDashboardClient({
   ownSubjects: OwnSubject[]
   analytics: AnalyticsData
   hodName: string
-  academicContexts: { id: string; academicYear: string; semester: string }[]
+  academicContexts: { id: string; academicYear: string; semester: string; status?: string }[]
   activeContextId: string | null
 }) {
   const [activeTab, setActiveTab] = useState<string>('dashboard')
@@ -195,7 +195,7 @@ export function HodDashboardClient({
             onChange={handleContextChange}
             options={academicContexts.map((c) => ({
               value: c.id,
-              label: `${c.academicYear} / ${c.semester.replace(' Semester', '')}`
+              label: `${c.academicYear} / ${c.semester.replace(' Semester', '')}${c.status === 'CURRENT' ? ' (Current)' : ''}`
             }))}
           />
         </div>

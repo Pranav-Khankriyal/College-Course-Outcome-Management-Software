@@ -15,7 +15,7 @@ export function PromotionClient({
   role
 }: {
   departments: { id: string; name: string }[],
-  academicContexts: { id: string; academicYear: string; semester: string; term: string }[],
+  academicContexts: { id: string; academicYear: string; semester: string; term?: string | null }[],
   sections: { id: string; name: string; year: string; departmentId: string }[],
   initialDepartmentId?: string,
   role: string
@@ -32,6 +32,15 @@ export function PromotionClient({
     held: number;
     left: number;
     enrollments: unknown[];
+    isYearRollover: boolean;
+    sourceYear: string;
+    targetYear: string;
+    breakdown: {
+      fyCount: number;
+      syCount: number;
+      tyCount: number;
+      finalYearCount: number;
+    };
   } | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -57,7 +66,11 @@ export function PromotionClient({
     setLoading(true)
     try {
       const result = await executePromotion(sourceContextId, targetContextId, departmentId, sectionId, autoUpgradeSections)
-      toast.success(`Successfully promoted ${result.promotedCount} students!`)
+      if (result.isYearRollover) {
+        toast.success(`Successfully promoted ${result.promotedCount} students! ${result.graduatedCount > 0 ? `(${result.graduatedCount} graduated)` : ''} FY is now clean for fresh admissions.`)
+      } else {
+        toast.success(`Successfully promoted ${result.promotedCount} students!`)
+      }
       setPreviewData(null)
       setIsConfirmOpen(false)
     } catch (err: unknown) {
@@ -106,7 +119,7 @@ export function PromotionClient({
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium"
             >
               {academicContexts.map(c => (
-                <option key={c.id} value={c.id}>{c.academicYear} Sem {c.semester} ({c.term})</option>
+                <option key={c.id} value={c.id}>{c.academicYear} · {c.semester}</option>
               ))}
             </select>
           </div>
@@ -137,7 +150,7 @@ export function PromotionClient({
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium"
             >
               {academicContexts.map(c => (
-                <option key={c.id} value={c.id}>{c.academicYear} Sem {c.semester} ({c.term})</option>
+                <option key={c.id} value={c.id}>{c.academicYear} · {c.semester}</option>
               ))}
             </select>
           </div>
@@ -150,7 +163,7 @@ export function PromotionClient({
                 onChange={e => setAutoUpgradeSections(e.target.checked)}
                 className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
               />
-              <span>Auto-upgrade semester names & years (e.g. Sem 3 → Sem 4, FY → SY)</span>
+              <span>Advance student year levels on Year Rollover (FY → SY, SY → TY, TY → Final Year)</span>
             </label>
           </div>
 
@@ -174,7 +187,11 @@ export function PromotionClient({
                 <Users className="w-5 h-5 text-indigo-500" />
                 Promotion Preview
               </h3>
-              <p className="text-sm text-slate-500 mt-1">Review the eligibility of students before confirming the promotion.</p>
+              <p className="text-sm text-slate-500 mt-1">
+                {previewData.isYearRollover 
+                  ? 'Academic Year Rollover (End of Even Sem / 2 Semesters): Students advance year levels, graduating seniors complete, and FY is prepared for new admissions.' 
+                  : 'Mid-Year Promotion (Odd → Even): Students continue in their current year level.'}
+              </p>
             </div>
             
             <button
@@ -206,6 +223,30 @@ export function PromotionClient({
             </div>
           </div>
 
+          {previewData.isYearRollover && (
+            <div className="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">Year Advancement Breakdown:</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                <div className="p-3 bg-white rounded-lg border border-slate-200">
+                  <div className="text-sm font-bold text-indigo-600">{previewData.breakdown.fyCount}</div>
+                  <div className="text-xs text-slate-600 mt-0.5">FY → SY</div>
+                </div>
+                <div className="p-3 bg-white rounded-lg border border-slate-200">
+                  <div className="text-sm font-bold text-blue-600">{previewData.breakdown.syCount}</div>
+                  <div className="text-xs text-slate-600 mt-0.5">SY → TY</div>
+                </div>
+                <div className="p-3 bg-white rounded-lg border border-slate-200">
+                  <div className="text-sm font-bold text-purple-600">{previewData.breakdown.tyCount}</div>
+                  <div className="text-xs text-slate-600 mt-0.5">TY → Final Year</div>
+                </div>
+                <div className="p-3 bg-white rounded-lg border border-slate-200">
+                  <div className="text-sm font-bold text-emerald-600">{previewData.breakdown.finalYearCount}</div>
+                  <div className="text-xs text-slate-600 mt-0.5">Final Year → Graduated</div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {previewData.held > 0 && (
             <div className="bg-amber-50 border border-amber-200/60 p-4 rounded-xl flex items-start gap-3 mb-4">
               <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
@@ -218,7 +259,8 @@ export function PromotionClient({
           <div className="bg-indigo-50 border border-indigo-200/60 p-4 rounded-xl flex items-start gap-3">
             <CheckCircle className="w-5 h-5 text-indigo-600 mt-0.5 shrink-0" />
             <div className="text-sm text-indigo-900">
-              Only <strong>ACTIVE</strong> students will be copied to the target academic period. Their historical enrollment in the source period will remain intact. No data will be overwritten.
+              Only <strong>ACTIVE</strong> students will be promoted to the target period. Historical enrollment in previous semesters remains completely intact.
+              {previewData.isYearRollover && " FY sections in the new period will be clean and ready for new intake."}
             </div>
           </div>
         </Card>
@@ -227,7 +269,7 @@ export function PromotionClient({
       <ConfirmDialog 
         isOpen={isConfirmOpen}
         title="Confirm Promotion"
-        description={`Are you sure you want to promote ${previewData?.eligible || 0} students? This action will copy them to the target academic period.`}
+        description={`Are you sure you want to promote ${previewData?.eligible || 0} students? This action will advance their enrollments to the target academic period.`}
         confirmText="Yes, Promote Students"
         onConfirm={handleConfirm}
         onCancel={() => setIsConfirmOpen(false)}

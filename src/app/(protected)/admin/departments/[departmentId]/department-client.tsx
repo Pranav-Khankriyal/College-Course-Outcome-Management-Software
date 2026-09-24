@@ -5,9 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Users, BookOpen, LayoutDashboard, Building2, GraduationCap, Search,
   Plus, Trash2, X, Check, Mail, User, BookMarked, UserPlus,
-  Upload, FileText, CheckCircle, Download
+  Upload, FileText, CheckCircle, Download, ArrowLeft
 } from 'lucide-react'
 import * as xlsx from 'xlsx'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
@@ -69,7 +70,7 @@ export function AdminDepartmentClient({
   sections: Record<string, { id: string; name: string; year: string; sectionEnrollments: { id: string; rollNumber: string; student: { name: string; prn: string } }[] }[]>
   faculty: { user: { id: string; name: string; email: string }; assignments: { id: string; courseOffering: { subject: { code: string; name: string }; section: { year: string; name: string } } }[] }[]
   subjects: { id: string; name: string; code: string; semester: number; courseOfferings: { id: string; academicContext: { academicYear: string }; section: { year: string; name: string }; assignments: { user: { id: string; name: string } }[] }[] }[]
-  academicContexts: { id: string; academicYear: string; semester: string }[]
+  academicContexts: { id: string; academicYear: string; semester: string; status?: string }[]
   activeContextId: string | null
   analytics: AnalyticsData
   allFacultyUsers: FacultyUser[]
@@ -96,6 +97,12 @@ export function AdminDepartmentClient({
   }
 
   const customNavItems = [
+    {
+      key: 'back-to-admin',
+      label: 'All Departments',
+      icon: <ArrowLeft className="w-[15px] h-[15px]" />,
+      href: '/admin',
+    },
     {
       key: 'dashboard',
       label: 'Dashboard',
@@ -144,26 +151,39 @@ export function AdminDepartmentClient({
       />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <Header breadcrumbs={[
-          { label: 'Departments', href: '/admin' },
-          { label: overview.department.code },
-          { label: breadcrumbLabel },
-        ]} />
+        <Header 
+          backHref="/admin"
+          breadcrumbs={[
+            { label: 'Departments', href: '/admin' },
+            { label: overview.department.code },
+            { label: breadcrumbLabel },
+          ]} 
+        />
 
         {/* Context selector bar */}
-        <div className="bg-card border-b border-black/5 px-5 py-1.5 flex items-center justify-between sticky top-11 z-40">
-          <span className="text-[13px] font-semibold text-foreground flex items-center gap-1.5 tracking-tight">
-            <div className="p-1 bg-primary/10 rounded text-primary">
-              <Building2 className="w-3.5 h-3.5" />
-            </div>
-            {overview.department.name}
-          </span>
+        <div className="bg-card border-b border-black/5 px-5 py-2 flex items-center justify-between sticky top-11 z-40">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-medium text-foreground bg-secondary/80 hover:bg-secondary border border-border shadow-2xs transition-all"
+              title="Back to Admin Dashboard"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>All Departments</span>
+            </Link>
+            <span className="text-[13px] font-semibold text-foreground flex items-center gap-1.5 tracking-tight">
+              <div className="p-1 bg-primary/10 rounded text-primary">
+                <Building2 className="w-3.5 h-3.5" />
+              </div>
+              {overview.department.name}
+            </span>
+          </div>
           <CustomSelect
             value={activeContextId || ''}
             onChange={handleContextChange}
             options={academicContexts.map((c) => ({
               value: c.id,
-              label: `${c.academicYear} / ${c.semester.replace(' Semester', '')}`
+              label: `${c.academicYear} / ${c.semester.replace(' Semester', '')}${c.status === 'CURRENT' ? ' (Current)' : ''}`
             }))}
           />
         </div>

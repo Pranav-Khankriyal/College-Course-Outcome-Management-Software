@@ -26,14 +26,18 @@ export default async function AdminDepartmentPage(props: {
 
   if (!department) notFound()
 
-  // Academic Contexts for the dropdown
+  // Academic Contexts for the dropdown (2024-25 up to latest 2026-27+)
   const academicContexts = await db.academicContext.findMany({
-    orderBy: { academicYear: 'desc' }
+    where: { academicYear: { gte: '2024-25' } },
+    orderBy: [
+      { academicYear: 'desc' },
+      { term: 'asc' }
+    ]
   })
   
   const activeContext = contextId 
     ? academicContexts.find(c => c.id === contextId) 
-    : academicContexts[0]
+    : academicContexts.find(c => c.status === 'CURRENT') || academicContexts[0]
 
   // Stats
   const [subjectCount, sectionCount, studentCount, facultyAssignments] = await Promise.all([

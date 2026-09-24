@@ -21,11 +21,15 @@ export default async function HodDashboard(props: {
   try {
     // Fetch contexts for the dropdown
     const academicContexts = await db.academicContext.findMany({
-      orderBy: { academicYear: 'desc' }
+      where: { academicYear: { gte: '2024-25' } },
+      orderBy: [
+        { academicYear: 'desc' },
+        { term: 'asc' }
+      ]
     })
     const activeContext = contextId 
       ? academicContexts.find(c => c.id === contextId) 
-      : academicContexts[0]
+      : academicContexts.find(c => c.status === 'CURRENT') || academicContexts[0]
       
     const activeContextId = activeContext?.id || null
 

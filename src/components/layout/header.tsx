@@ -1,11 +1,17 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { LogOut, ChevronRight, Settings } from 'lucide-react'
+import { LogOut, ChevronRight, Settings, ArrowLeft } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 
-export function Header({ breadcrumbs }: { breadcrumbs?: { label: string; href?: string }[] }) {
+export function Header({ 
+  breadcrumbs,
+  backHref
+}: { 
+  breadcrumbs?: { label: string; href?: string }[]
+  backHref?: string
+}) {
   const { data: session } = useSession()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -45,20 +51,38 @@ export function Header({ breadcrumbs }: { breadcrumbs?: { label: string; href?: 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-black/5">
       <div className="px-4 md:px-6 h-11 flex items-center justify-between gap-4">
-        {/* Left: Breadcrumbs */}
+        {/* Left: Breadcrumbs + Optional Back Button */}
         <div className="flex items-center gap-2 ml-10 md:ml-0 min-w-0">
+          {backHref && (
+            <Link
+              href={backHref}
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center justify-center mr-0.5"
+              title="Go back"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+          )}
           {breadcrumbs && breadcrumbs.length > 0 ? (
             <nav className="flex items-center gap-1 min-w-0">
               {breadcrumbs.map((crumb, i) => (
                 <span key={i} className="flex items-center gap-1.5 min-w-0">
                   {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 flex-shrink-0" />}
-                  <span className={`${
-                    i === breadcrumbs.length - 1
-                      ? 'font-semibold text-foreground text-[14px]'
-                      : 'font-medium text-muted-foreground text-[14px]'
-                  } truncate tracking-tight`}>
-                    {crumb.label}
-                  </span>
+                  {crumb.href && i < breadcrumbs.length - 1 ? (
+                    <Link
+                      href={crumb.href}
+                      className="font-medium text-muted-foreground text-[14px] hover:text-foreground transition-colors hover:underline truncate tracking-tight"
+                    >
+                      {crumb.label}
+                    </Link>
+                  ) : (
+                    <span className={`${
+                      i === breadcrumbs.length - 1
+                        ? 'font-semibold text-foreground text-[14px]'
+                        : 'font-medium text-muted-foreground text-[14px]'
+                    } truncate tracking-tight`}>
+                      {crumb.label}
+                    </span>
+                  )}
                 </span>
               ))}
             </nav>

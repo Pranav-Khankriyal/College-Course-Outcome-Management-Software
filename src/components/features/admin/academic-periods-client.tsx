@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import { Card } from '@/components/ui/card'
-import { Plus, Edit2, Calendar } from 'lucide-react'
+import { Plus, Edit2, Calendar, FastForward, CheckCircle2, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
-import { createAcademicPeriod, updateAcademicPeriod } from '@/app/actions/academic'
+import { createAcademicPeriod, updateAcademicPeriod, advanceSemesterOrRollover } from '@/app/actions/academic'
 import { AcademicPeriodStatus } from '@prisma/client'
+import { useRouter } from 'next/navigation'
 
 export function AcademicPeriodsClient({
   initialPeriods
@@ -14,13 +15,18 @@ export function AcademicPeriodsClient({
 }) {
   const [periods, setPeriods] = useState(initialPeriods)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isAdvancing, setIsAdvancing] = useState(false)
   const [editingPeriod, setEditingPeriod] = useState<{ id: string; academicYear: string; semester: string; term?: string | null; status: AcademicPeriodStatus } | null>(null)
+  const router = useRouter()
   
   // form state
   const [academicYear, setAcademicYear] = useState('')
   const [semester, setSemester] = useState('')
   const [term, setTerm] = useState('Odd')
   const [status, setStatus] = useState<AcademicPeriodStatus>('UPCOMING')
+
+  const currentPeriod = periods.find(p => p.status === 'CURRENT')
+  const isOddActive = currentPeriod?.term === 'Odd' || currentPeriod?.semester?.toLowerCase().includes('odd')
 
   const openNew = () => {
     setEditingPeriod(null)
@@ -54,45 +60,104 @@ export function AcademicPeriodsClient({
         setPeriods([created, ...periods])
       }
       setIsModalOpen(false)
+      router.refresh()
       toast.success(editingPeriod ? 'Period updated successfully' : 'Period created successfully')
     } catch (err: unknown) {
       toast.error((err as Error).message || 'Failed to save period')
     }
   }
 
+  const handleAdvanceSemester = async () => {
+    setIsAdvancing(true)
+    try {
+      const res = await advanceSemesterOrRollover()
+      toast.success(res.message)
+      router.refresh()
+    } catch (err: unknown) {
+      toast.error((err as Error).message || 'Failed to advance semester')
+    } finally {
+      setIsAdvancing(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">Academic Periods</h2>
-          <p className="text-slate-500">Manage semesters and academic years.</p>
+          <p className="text-slate-500">Manage semesters, academic calendar cycles, and automated year rollover.</p>
         </div>
-        <button
-          onClick={openNew}
-          className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Create Period
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleAdvanceSemester}
+            disabled={isAdvancing}
+            className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-800 transition-colors shadow-sm disabled:opacity-50"
+            title={isOddActive ? 'Advance to Even Semester' : 'Conclude 2nd Semester & Rollover to Next Academic Year'}
+          >
+            <FastForward className="w-4 h-4 text-amber-400" />
+            {isAdvancing ? 'Advancing...' : isOddActive ? 'Advance to Even Semester' : 'Rollover to Next Academic Year'}
+          </button>
+          <button
+            onClick={openNew}
+            className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Create Period
+          </button>
+        </div>
+      </div>
+
+      {/* Mechanism Info Banner */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-50/80 via-purple-50/50 to-blue-50/80 border border-indigo-100 flex flex-col md:flex-row md:items-center justify-between gap-3 text-sm">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-xs">
+            <Calendar className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-semibold text-slate-900 flex items-center gap-2">
+              <span>Active Cycle: {currentPeriod ? `${currentPeriod.academicYear} · ${currentPeriod.semester}` : 'None active'}</span>
+              {currentPeriod && <span className="px-2 py-0.5 text-xs bg-emerald-100 text-emerald-700 font-bold rounded-full">ACTIVE</span>}
+            </div>
+            <p className="text-slate-600 text-xs mt-0.5">
+              Automated Rollover: After every 2 semesters (upon completion of each Even semester), the next Academic Year is automatically generated and initialized.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 shrink-0 bg-white/80 px-3 py-1.5 rounded-lg border border-indigo-100 shadow-2xs">
+          <span>Oldest: <strong>2024-25</strong></span>
+          <ArrowRight className="w-3 h-3 text-slate-400" />
+          <span>Current: <strong>2026-27</strong></span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {periods.map(p => (
-          <Card key={p.id} className="p-6 relative group overflow-hidden border-slate-200/60 shadow-sm hover:shadow-md transition-all">
+          <Card key={p.id} className={`p-6 relative group overflow-hidden border shadow-sm hover:shadow-md transition-all ${
+            p.status === 'CURRENT' ? 'border-indigo-300 ring-2 ring-indigo-500/10 bg-white' : 'border-slate-200/60'
+          }`}>
             <div className="flex justify-between items-start mb-4">
-              <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600">
+              <div className={`p-3 rounded-xl ${
+                p.status === 'CURRENT' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'
+              }`}>
                 <Calendar className="w-6 h-6" />
               </div>
-              <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                p.status === 'CURRENT' ? 'bg-green-100 text-green-700' :
-                p.status === 'COMPLETED' ? 'bg-slate-100 text-slate-700' :
-                'bg-blue-100 text-blue-700'
-              }`}>
-                {p.status}
-              </span>
+              <div className="flex flex-col items-end gap-1">
+                <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
+                  p.status === 'CURRENT' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                  p.status === 'COMPLETED' ? 'bg-slate-100 text-slate-600' :
+                  'bg-blue-100 text-blue-700'
+                }`}>
+                  {p.status}
+                </span>
+                {p.term === 'Even' && (
+                  <span className="text-[10px] font-medium text-slate-400">
+                    2nd Sem of Year
+                  </span>
+                )}
+              </div>
             </div>
             <h3 className="text-lg font-semibold text-slate-900 mb-1">{p.academicYear}</h3>
-            <p className="text-slate-500 text-sm font-medium">Semester {p.semester} • {p.term} Term</p>
+            <p className="text-slate-500 text-sm font-medium">{p.semester} • {p.term} Term</p>
 
             <button
               onClick={() => openEdit(p)}
