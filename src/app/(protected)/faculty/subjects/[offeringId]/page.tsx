@@ -158,10 +158,8 @@ export default async function SubjectPage(props: { params: Promise<{ offeringId:
         </div>
       </Link>
 
-      {/* Excel Upload - Only show if students are enrolled */}
-      {enrollments.length > 0 && (
-        <ExcelUpload offeringId={offeringId} />
-      )}
+      {/* Excel Upload - Always show so faculty can auto-enroll via marks upload */}
+      <ExcelUpload offeringId={offeringId} />
 
       {/* Student Marks Table */}
       <div className="bg-card rounded-2xl border border-black/5 shadow-sm">
@@ -176,7 +174,7 @@ export default async function SubjectPage(props: { params: Promise<{ offeringId:
           <div className="p-10 text-center">
             <GraduationCap className="w-8 h-8 text-muted-foreground/20 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">
-              No students enrolled yet. Please ask the Admin or HOD to enroll students in this section before importing marks.
+              No students enrolled yet. You can import marks via the Excel template above, which will automatically enroll the students.
             </p>
           </div>
         ) : (
