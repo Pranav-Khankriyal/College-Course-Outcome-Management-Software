@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Users, BookOpen, LayoutDashboard, Building2, GraduationCap, Search,
   Plus, Trash2, X, Check, Mail, User, BookMarked, UserPlus,
-  Upload, FileText, CheckCircle, Download, ArrowLeft
+  Upload, CheckCircle, Download, ArrowLeft
 } from 'lucide-react'
 import * as xlsx from 'xlsx'
 import Link from 'next/link'
@@ -644,7 +644,7 @@ function AddFacultyModal({
                 ))}
               </select>
               {allFacultyUsers.length === 0 && (
-                <p className="text-[11px] text-rose-500 mt-1">No faculty registered in college yet. Switch to "Create New Faculty".</p>
+                <p className="text-[11px] text-rose-500 mt-1">No faculty registered in college yet. Switch to &quot;Create New Faculty&quot;.</p>
               )}
             </div>
 
@@ -831,7 +831,7 @@ function ImportFacultyModal({
                 onChange={e => setSelectedOfferingId(e.target.value)}
                 className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full px-3.5 py-2 rounded text-xs"
               >
-                <option value="">Leave Unassigned or Use Sheet's Subject Code</option>
+                <option value="">Leave Unassigned or Use Sheet&apos;s Subject Code</option>
                 {departmentOfferings.map(o => (
                   <option key={o.id} value={o.id}>
                     {o.subject.code} — {o.subject.name} ({o.section.year} Sec {o.section.name})
