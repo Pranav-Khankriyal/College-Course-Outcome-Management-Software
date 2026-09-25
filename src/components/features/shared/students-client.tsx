@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Card } from '@/components/ui/card'
-import { Plus, Upload, FileText, CheckCircle, AlertCircle, History, X } from 'lucide-react'
+import { Plus, Upload, FileText, CheckCircle, AlertCircle, History } from 'lucide-react'
 import { toast } from 'sonner'
 import { getStudents, previewStudentImport, confirmStudentImport, getStudentHistory, addStudent } from '@/app/actions/students'
 

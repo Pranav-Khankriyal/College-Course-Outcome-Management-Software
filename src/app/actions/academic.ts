@@ -348,7 +348,8 @@ export async function executePromotion(
   targetAcademicContextId: string,
   departmentId: string,
   sectionId?: string,
-  autoUpgradeSections: boolean = false
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _autoUpgradeSections: boolean = false
 ) {
   await requireAdminOrHod()
 

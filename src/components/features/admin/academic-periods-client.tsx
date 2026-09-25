@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Card } from '@/components/ui/card'
-import { Plus, Edit2, Calendar, FastForward, CheckCircle2, ArrowRight } from 'lucide-react'
+import { Plus, Edit2, Calendar, FastForward, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { createAcademicPeriod, updateAcademicPeriod, advanceSemesterOrRollover } from '@/app/actions/academic'
 import { AcademicPeriodStatus } from '@prisma/client'
