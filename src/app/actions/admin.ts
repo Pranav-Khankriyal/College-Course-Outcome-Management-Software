@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth'
 import bcrypt from 'bcryptjs'
 import { revalidatePath } from 'next/cache'
 import * as xlsx from 'xlsx'
+import crypto from 'crypto'
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions)
@@ -132,7 +133,8 @@ export async function createUser(data: {
     return { error: 'A user with this email already exists' }
   }
 
-  const hashedPassword = await bcrypt.hash(data.password, 12)
+  const temporaryPassword = data.password || crypto.randomBytes(4).toString('hex')
+  const hashedPassword = await bcrypt.hash(temporaryPassword, 12)
 
   const user = await db.user.create({
     data: {
@@ -141,11 +143,12 @@ export async function createUser(data: {
       hashedPassword,
       role: data.role,
       isActive: true,
+      mustChangePassword: true,
     },
   })
 
   revalidatePath('/admin')
-  return { success: true, user: { id: user.id, name: user.name, email: user.email, role: user.role } }
+  return { success: true, user: { id: user.id, name: user.name, email: user.email, role: user.role }, temporaryPassword }
 }
 
 export async function previewFacultyImport(base64Data: string) {
@@ -224,14 +227,16 @@ export async function confirmFacultyImport(parsedData: { name: string; email: st
         }
       })
     } else {
-      const hashedPassword = await bcrypt.hash(data.password, 12)
+      const temporaryPassword = data.password || crypto.randomBytes(4).toString('hex')
+      const hashedPassword = await bcrypt.hash(temporaryPassword, 12)
       await db.user.create({
         data: {
           name: data.name,
           email: data.email,
           role: data.role as 'ADMIN' | 'HOD' | 'FACULTY',
           hashedPassword,
-          isActive: true
+          isActive: true,
+          mustChangePassword: true,
         }
       })
     }
@@ -260,14 +265,16 @@ export async function confirmDepartmentFacultyImport(
         }
       })
     } else {
-      const hashedPassword = await bcrypt.hash(data.password || 'faculty123', 12)
+      const temporaryPassword = data.password || crypto.randomBytes(4).toString('hex')
+      const hashedPassword = await bcrypt.hash(temporaryPassword, 12)
       user = await db.user.create({
         data: {
           name: data.name.trim(),
           email: cleanEmail,
           role: (data.role as 'ADMIN' | 'HOD' | 'FACULTY') || 'FACULTY',
           hashedPassword,
-          isActive: true
+          isActive: true,
+          mustChangePassword: true,
         }
       })
     }
@@ -363,17 +370,18 @@ export async function toggleUserActive(userId: string) {
   return { success: true, isActive: !user.isActive }
 }
 
-export async function resetUserPassword(userId: string, newPassword: string) {
+export async function resetUserPassword(userId: string) {
   await requireAdmin()
 
-  const hashedPassword = await bcrypt.hash(newPassword, 12)
+  const temporaryPassword = crypto.randomBytes(4).toString('hex')
+  const hashedPassword = await bcrypt.hash(temporaryPassword, 12)
   await db.user.update({
     where: { id: userId },
-    data: { hashedPassword },
+    data: { hashedPassword, mustChangePassword: true },
   })
 
   revalidatePath('/admin')
-  return { success: true }
+  return { success: true, temporaryPassword }
 }
 
 export async function assignHod(departmentId: string, userId: string | null) {
@@ -517,14 +525,16 @@ export async function createAndAssignFaculty(data: {
   email: string
   password?: string
   courseOfferingId?: string
-}): Promise<{ success: true; user: { id: string; name: string; email: string } } | { error: string }> {
+}): Promise<{ success: true; user: { id: string; name: string; email: string }; temporaryPassword?: string } | { error: string }> {
   try {
     await requireAdmin()
 
     const cleanEmail = data.email.trim().toLowerCase()
+    let temporaryPassword
     let user = await db.user.findUnique({ where: { email: cleanEmail } })
     if (!user) {
-      const hashedPassword = await bcrypt.hash(data.password || 'faculty123', 12)
+      temporaryPassword = data.password || crypto.randomBytes(4).toString('hex')
+      const hashedPassword = await bcrypt.hash(temporaryPassword, 12)
       user = await db.user.create({
         data: {
           name: data.name.trim(),
@@ -532,6 +542,7 @@ export async function createAndAssignFaculty(data: {
           hashedPassword,
           role: 'FACULTY',
           isActive: true,
+          mustChangePassword: true,
         }
       })
     }
@@ -548,7 +559,7 @@ export async function createAndAssignFaculty(data: {
     }
 
     revalidatePath('/admin')
-    return { success: true, user: { id: user.id, name: user.name, email: user.email } }
+    return { success: true, user: { id: user.id, name: user.name, email: user.email }, temporaryPassword }
   } catch (e) {
     return { error: (e as Error).message || 'Failed to create or assign faculty' }
   }

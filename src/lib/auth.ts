@@ -42,22 +42,32 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
+          mustChangePassword: user.mustChangePassword,
         }
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id
         token.role = user.role
+        // `mustChangePassword` might be present on the user object returned from authorize
+        token.mustChangePassword = (user as any).mustChangePassword
       }
+      
+      // Allow updating token when password is changed
+      if (trigger === "update" && session?.mustChangePassword === false) {
+        token.mustChangePassword = false
+      }
+      
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
+        ;(session.user as any).mustChangePassword = token.mustChangePassword as boolean
       }
       return session
     },

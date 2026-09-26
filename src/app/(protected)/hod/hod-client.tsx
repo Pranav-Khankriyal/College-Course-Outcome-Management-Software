@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Users, BookOpen, GraduationCap, Search, X,
-  User, Plus, Trash2, Check, LayoutDashboard, Edit3, Mail, Building2
+  User, Plus, Trash2, Check, LayoutDashboard, Edit3, Mail, Building2, KeyRound
 } from 'lucide-react'
-import { hodRemoveFaculty, hodRemoveFacultyFromDepartment, hodCreateSubject, hodDeleteSubject, hodUpdateSubject, hodCreateFaculty } from '@/app/actions/hod'
+import { hodRemoveFaculty, hodRemoveFacultyFromDepartment, hodCreateSubject, hodDeleteSubject, hodUpdateSubject, hodCreateFaculty, hodResetFacultyPassword } from '@/app/actions/hod'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Sidebar } from '@/components/layout/sidebar'
@@ -295,6 +295,7 @@ function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
   const [showAddModal, setShowAddModal] = useState(false)
   const [assignmentToDelete, setAssignmentToDelete] = useState<string | null>(null)
   const [facultyToRemove, setFacultyToRemove] = useState<string | null>(null)
+  const [facultyToReset, setFacultyToReset] = useState<string | null>(null)
   const router = useRouter()
 
   const filtered = faculty.filter(f =>
@@ -333,6 +334,23 @@ function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
       toast.error((e as Error).message || 'An unexpected error occurred')
     } finally {
       setFacultyToRemove(null)
+    }
+  }
+
+  const confirmResetPassword = async () => {
+    if (!facultyToReset) return
+    try {
+      const result = await hodResetFacultyPassword(facultyToReset)
+      if (result.success) {
+        toast.success(`Password reset. New temp password: ${result.temporaryPassword}`, { duration: 10000 })
+        router.refresh()
+      } else {
+        toast.error(result.error || 'Failed')
+      }
+    } catch (e: unknown) {
+      toast.error((e as Error).message || 'An unexpected error occurred')
+    } finally {
+      setFacultyToReset(null)
     }
   }
 
@@ -380,13 +398,22 @@ function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
                   : 'bg-emerald-500/10 text-emerald-600'
               }`}>{f.user.role}</span>
               {f.user.role !== 'HOD' && (
-                <button
-                  onClick={() => setFacultyToRemove(f.user.id)}
-                  className="p-1.5 rounded transition-colors duration-150 hover:bg-destructive/10 text-muted-foreground hover:text-destructive flex-shrink-0 ml-1"
-                  title="Remove faculty from department"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1 flex-shrink-0 ml-1">
+                  <button
+                    onClick={() => setFacultyToReset(f.user.id)}
+                    className="p-1.5 rounded transition-colors duration-150 hover:bg-orange-500/10 text-muted-foreground hover:text-orange-500"
+                    title="Reset faculty password"
+                  >
+                    <KeyRound className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setFacultyToRemove(f.user.id)}
+                    className="p-1.5 rounded transition-colors duration-150 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                    title="Remove faculty from department"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               )}
             </div>
             <div className="px-5 py-3">
@@ -449,6 +476,16 @@ function FacultyTab({ faculty }: { faculty: FacultyItem[] }) {
         confirmText="Remove Faculty"
         onConfirm={confirmRemoveFaculty}
         onCancel={() => setFacultyToRemove(null)}
+      />
+      
+      <ConfirmDialog 
+        isOpen={!!facultyToReset}
+        title="Reset Password"
+        description="Are you sure you want to reset this faculty's password? A new temporary password will be generated and they will be forced to change it on their next login."
+        isDanger={false}
+        confirmText="Confirm Reset"
+        onConfirm={confirmResetPassword}
+        onCancel={() => setFacultyToReset(null)}
       />
     </motion.div>
   )
@@ -641,7 +678,11 @@ function HodAddFacultyModal({ onClose }: { onClose: () => void }) {
     const result = await hodCreateFaculty({ name, email })
     setLoading(false)
     if (result.error) toast.error(result.error)
-    else { toast.success('Faculty added successfully'); router.refresh(); onClose() }
+    else { 
+      toast.success(`Faculty added. Temp password: ${result.temporaryPassword}`, { duration: 10000 })
+      router.refresh()
+      onClose() 
+    }
   }
 
   return (
@@ -673,7 +714,7 @@ function HodAddFacultyModal({ onClose }: { onClose: () => void }) {
                 placeholder="faculty@bvdu.edu.in" className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full pl-9 pr-3.5 py-2.5 rounded text-sm" required />
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground">Default password: <strong className="text-foreground">faculty123</strong></p>
+          <p className="text-[11px] text-muted-foreground">A temporary password will be generated automatically.</p>
           <button type="submit" disabled={loading}
             className="gradient-primary w-full py-2.5 rounded text-[13px] font-semibold flex items-center justify-center gap-2">
             {loading ? <Spinner /> : <><Check className="w-3.5 h-3.5" /> Add Faculty</>}

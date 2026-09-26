@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 
 async function requireHod() {
   const session = await getServerSession(authOptions)
@@ -203,7 +204,8 @@ export async function hodCreateFaculty(data: { name: string; email: string }) {
     return { error: 'A user with this email already exists' }
   }
 
-  const hashedPassword = await bcrypt.hash('faculty123', 12)
+  const temporaryPassword = crypto.randomBytes(4).toString('hex')
+  const hashedPassword = await bcrypt.hash(temporaryPassword, 12)
 
   const user = await db.user.create({
     data: {
@@ -212,12 +214,13 @@ export async function hodCreateFaculty(data: { name: string; email: string }) {
       hashedPassword,
       role: 'FACULTY',
       isActive: true,
+      mustChangePassword: true,
       departments: { connect: { id: department.id } }
     },
   })
 
   revalidatePath('/hod')
-  return { success: true, user: { id: user.id, name: user.name, email: user.email } }
+  return { success: true, user: { id: user.id, name: user.name, email: user.email }, temporaryPassword }
 }
 
 export async function hodAssignFaculty(userId: string, courseOfferingId: string) {
@@ -259,6 +262,33 @@ export async function hodRemoveFaculty(assignmentId: string) {
 
   revalidatePath('/hod')
   return { success: true }
+}
+
+export async function hodResetFacultyPassword(userId: string) {
+  const { department } = await getHodDepartment()
+
+  // Verify the user is associated with the department
+  const user = await db.user.findFirst({
+    where: {
+      id: userId,
+      departments: { some: { id: department.id } }
+    }
+  })
+
+  if (!user) {
+    return { error: 'Faculty not found in your department' }
+  }
+
+  const temporaryPassword = crypto.randomBytes(4).toString('hex')
+  const hashedPassword = await bcrypt.hash(temporaryPassword, 12)
+
+  await db.user.update({
+    where: { id: userId },
+    data: { hashedPassword, mustChangePassword: true }
+  })
+
+  revalidatePath('/hod')
+  return { success: true, temporaryPassword }
 }
 
 export async function hodRemoveFacultyFromDepartment(userId: string) {

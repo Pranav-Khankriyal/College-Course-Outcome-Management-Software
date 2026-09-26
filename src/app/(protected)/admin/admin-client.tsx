@@ -757,12 +757,17 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || !email || !password) return
+    if (!name || !email) return
     setLoading(true)
-    const result = await createUser({ name, email, password, role })
+    // We send an empty password to let the backend generate it
+    const result = await createUser({ name, email, password: '', role })
     setLoading(false)
     if (result.error) toast.error(result.error)
-    else { toast.success(`User "${name}" created successfully`); router.refresh(); onClose() }
+    else { 
+      toast.success(`User "${name}" created. Temp password: ${result.temporaryPassword}`, { duration: 10000 })
+      router.refresh()
+      onClose() 
+    }
   }
 
   return (
@@ -794,18 +799,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
                 placeholder="user@bvdu.edu.in" className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full pl-9 pr-3.5 py-2.5 rounded text-sm" required />
             </div>
           </div>
-          <div>
-            <label className="block text-[12px] font-medium text-foreground mb-1.5">Password</label>
-            <div className="relative">
-              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-              <input type={showPwd ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
-                placeholder="Enter password" className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full pl-9 pr-10 py-2.5 rounded text-sm" required />
-              <button type="button" onClick={() => setShowPwd(!showPwd)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                {showPwd ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-          </div>
+
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">Role</label>
             <select value={role} onChange={e => setRole(e.target.value as 'ADMIN' | 'HOD' | 'FACULTY')}
@@ -891,11 +885,14 @@ function ResetPasswordModal({ user, onClose }: { user: UserItem; onClose: () => 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newPassword) return
     setLoading(true)
-    const result = await resetUserPassword(user.id, newPassword)
+    const result = await resetUserPassword(user.id)
     setLoading(false)
-    if (result.success) { toast.success(`Password reset for ${user.name}`); router.refresh(); onClose() }
+    if (result.success) { 
+      toast.success(`Password reset for ${user.name}. New temp password: ${result.temporaryPassword}`, { duration: 10000 })
+      router.refresh()
+      onClose() 
+    }
     else toast.error('Failed to reset password')
   }
 
@@ -911,25 +908,22 @@ function ResetPasswordModal({ user, onClose }: { user: UserItem; onClose: () => 
           <h2 className="text-[15px] font-semibold">Reset Password</h2>
           <button onClick={onClose} className="p-1.5 rounded hover:bg-secondary transition-colors"><X className="w-4 h-4" /></button>
         </div>
-        <p className="text-[12px] text-muted-foreground mb-4">
-          Setting new password for <strong className="text-foreground">{user.name}</strong>
+        <p className="text-[13px] text-muted-foreground mb-4">
+          Are you sure you want to reset the password for <strong className="text-foreground">{user.name}</strong>? A new temporary password will be generated, and they will be forced to change it on their next login.
         </p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="relative">
-            <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <input type={showPwd ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)}
-              placeholder="New password" className="bg-card border border-black/5 shadow-sm outline-none focus:ring-2 focus:ring-primary/20 w-full pl-9 pr-10 py-2.5 rounded text-sm" required />
-            <button type="button" onClick={() => setShowPwd(!showPwd)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-              {showPwd ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            </button>
-          </div>
-          <button type="submit" disabled={loading}
-            className="w-full py-2.5 rounded text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors duration-150"
-            style={{ backgroundColor: 'hsl(38, 92%, 44%)', color: 'white' }}>
-            {loading ? <Spinner /> : <><Check className="w-3.5 h-3.5" /> Reset Password</>}
+        <div className="flex gap-3 justify-end">
+          <button type="button" onClick={onClose} disabled={loading}
+            className="px-4 py-2 rounded text-[13px] font-semibold text-muted-foreground hover:bg-black/5 transition-colors">
+            Cancel
           </button>
-        </form>
+          <form onSubmit={handleSubmit}>
+            <button type="submit" disabled={loading}
+              className="px-4 py-2 rounded text-[13px] font-semibold text-white transition-opacity flex items-center gap-2"
+              style={{ backgroundColor: 'hsl(38, 92%, 44%)' }}>
+              {loading ? <Spinner /> : <><Check className="w-3.5 h-3.5" /> Confirm Reset</>}
+            </button>
+          </form>
+        </div>
       </motion.div>
     </ModalBackdrop>
   )

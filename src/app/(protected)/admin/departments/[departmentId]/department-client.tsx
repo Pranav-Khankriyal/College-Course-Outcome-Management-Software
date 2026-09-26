@@ -510,7 +510,12 @@ function AddFacultyModal({
     setLoading(false)
     if ('error' in result && result.error) toast.error(result.error)
     else {
-      toast.success(`Faculty ${name} registered successfully`)
+      const tempPass = result && 'user' in result && (result as any).temporaryPassword
+      if (tempPass) {
+        toast.success(`Faculty ${name} registered. Temp password: ${tempPass}`, { duration: 10000 })
+      } else {
+        toast.success(`Faculty ${name} registered successfully`)
+      }
       router.refresh()
       onClose()
     }
@@ -617,7 +622,7 @@ function AddFacultyModal({
               </select>
             </div>
 
-            <p className="text-[11px] text-muted-foreground">Default password for new faculty will be <strong className="text-foreground">faculty123</strong>.</p>
+            <p className="text-[11px] text-muted-foreground">A temporary password will be generated automatically.</p>
 
             <button
               type="submit"
