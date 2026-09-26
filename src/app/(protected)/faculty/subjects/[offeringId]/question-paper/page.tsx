@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { QuestionPaperForm, RecentQuestionPapers } from '@/components/features/faculty/question-paper-form'
 import { getRecentQuestionPapers } from '@/app/actions/question-paper'
+import { InfoTooltip } from '@/components/ui/info-tooltip'
 
 export default async function QuestionPaperPage(props: { params: Promise<{ offeringId: string }> }) {
   const session = await getServerSession(authOptions)
@@ -46,9 +47,12 @@ export default async function QuestionPaperPage(props: { params: Promise<{ offer
           <ArrowLeft className="w-4 h-4 text-muted-foreground" />
         </Link>
         <div>
-          <h1 className="text-lg font-semibold text-foreground" style={{ letterSpacing: '-0.015em' }}>
-            Create Question Paper
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold text-foreground" style={{ letterSpacing: '-0.015em' }}>
+              Create Question Paper
+            </h1>
+            <InfoTooltip content="Create a unit test question paper using the official template. The Course Outcomes (COs) you assign to each question here get mapped to the assessment criteria — this is what drives CO attainment analysis. The question structure (number of questions, OR pattern) is determined by the CO Structure selected in Settings." />
+          </div>
           <div className="flex items-center gap-2.5 mt-0.5">
             <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold"
               style={{ backgroundColor: 'hsl(221 83% 53% / 0.1)', color: 'hsl(221, 83%, 53%)' }}>

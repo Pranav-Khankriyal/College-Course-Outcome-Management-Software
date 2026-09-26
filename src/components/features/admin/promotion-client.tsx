@@ -6,6 +6,7 @@ import { ArrowRight, Users, CheckCircle, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { previewPromotion, executePromotion } from '@/app/actions/academic'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { InfoTooltip } from '@/components/ui/info-tooltip'
 
 export function PromotionClient({
   departments,
@@ -84,7 +85,10 @@ export function PromotionClient({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Semester Promotion</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">Semester Promotion</h2>
+            <InfoTooltip content="Promote students from one academic period to the next (e.g., Odd Semester to Even Semester, or across academic years). Students are moved to the next section/year while their previous records are preserved. You can preview the promotion before executing it." />
+          </div>
           <p className="text-slate-500">Promote students to the next academic period while retaining historical records.</p>
         </div>
       </div>

@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Settings, BookOpen, Layers, Save, Plus, Trash2, Loader2, Edit3, Check } from 'lucide-react'
+import { BookOpen, Layers, Plus, Trash2, Loader2, Edit3, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { getSetting, saveSetting, getSectionsByYear, addSection, deleteSection, getCustomStructures, saveCustomStructure, deleteCustomStructure, getActiveStructure, setActiveStructure } from '@/app/actions/settings'
+import { InfoTooltip } from '@/components/ui/info-tooltip'
+import { getSectionsByYear, addSection, deleteSection, getCustomStructures, saveCustomStructure, deleteCustomStructure, getActiveStructure, setActiveStructure } from '@/app/actions/settings'
 import { PREDEFINED_STRUCTURES, CoStructure } from '@/lib/co-structures'
 
 interface SettingsClientProps {
@@ -16,34 +17,11 @@ interface SettingsClientProps {
 const YEARS = ['FY', 'SY', 'TY', 'Final Year']
 
 export function SettingsClient({ role, departmentId: initialDeptId, departments }: SettingsClientProps) {
-  const [activeTab, setActiveTab] = useState<'uts' | 'sections' | 'co'>('uts')
+  const [activeTab, setActiveTab] = useState<'sections' | 'co'>('co')
   const [selectedDeptId, setSelectedDeptId] = useState<string>(initialDeptId || (departments?.[0]?.id || ''))
 
   // The effective department ID: for HOD it's fixed, for ADMIN it's from the dropdown
   const effectiveDeptId = role === 'HOD' ? initialDeptId : selectedDeptId
-
-  // Number of UTs State
-  const [numUts, setNumUts] = useState<string>('3')
-  const [savingUts, setSavingUts] = useState(false)
-
-  useEffect(() => {
-    const fetchUtSettings = async () => {
-      const setting = await getSetting('NUMBER_OF_UTS', effectiveDeptId)
-      if (setting && setting.value) {
-        setNumUts(setting.value)
-      }
-    }
-    fetchUtSettings()
-  }, [effectiveDeptId])
-
-  const handleSaveUts = async () => {
-    setSavingUts(true)
-    const result = await saveSetting('NUMBER_OF_UTS', numUts, effectiveDeptId)
-    setSavingUts(false)
-    if (result.success) {
-      toast.success('Number of UTs saved successfully.')
-    }
-  }
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -72,17 +50,6 @@ export function SettingsClient({ role, departmentId: initialDeptId, departments 
         {/* Sidebar Tabs */}
         <div className="w-full md:w-64 space-y-1">
           <button
-            onClick={() => setActiveTab('uts')}
-            className={`w-full flex items-center gap-3 px-4 py-3 text-[14px] font-medium rounded-xl transition-colors ${
-              activeTab === 'uts'
-                ? 'bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            Number of UTs
-          </button>
-          <button
             onClick={() => setActiveTab('sections')}
             className={`w-full flex items-center gap-3 px-4 py-3 text-[14px] font-medium rounded-xl transition-colors ${
               activeTab === 'sections'
@@ -108,41 +75,6 @@ export function SettingsClient({ role, departmentId: initialDeptId, departments 
 
         {/* Content Area */}
         <div className="flex-1 min-w-0 bg-white border rounded-2xl shadow-sm p-6 md:p-8">
-          {activeTab === 'uts' && (
-            <div className="space-y-6 max-w-md animate-in fade-in duration-300">
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">Unit Tests Configuration</h2>
-                <p className="text-[13px] text-muted-foreground mt-1">
-                  Configure the total number of unit tests expected in a semester.
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[13px] font-medium text-foreground">Number of UTs</label>
-                  <select
-                    value={numUts}
-                    onChange={(e) => setNumUts(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-xl text-[14px] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  >
-                    <option value="2">2 Unit Tests</option>
-                    <option value="3">3 Unit Tests</option>
-                    <option value="4">4 Unit Tests</option>
-                    <option value="5">5 Unit Tests</option>
-                  </select>
-                </div>
-                <button
-                  onClick={handleSaveUts}
-                  disabled={savingUts}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground text-[14px] font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
-                >
-                  {savingUts ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  Save Configuration
-                </button>
-              </div>
-            </div>
-          )}
-
           {activeTab === 'sections' && (
             <SectionManager departmentId={effectiveDeptId} />
           )}
@@ -211,9 +143,12 @@ function SectionManager({ departmentId }: { departmentId?: string }) {
   return (
     <div className="space-y-6 max-w-2xl animate-in fade-in duration-300">
       <div>
-        <h2 className="text-lg font-semibold text-foreground">Manage Sections</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground">Manage Sections</h2>
+          <InfoTooltip content="Add or remove class sections (like A, B, C) for each academic year (FY, SY, TY, Final Year). Sections are used to group students and assign faculty to specific subject offerings." />
+        </div>
         <p className="text-[13px] text-muted-foreground mt-1">
-          Add or remove class sections specific to an academic year (FY, SY, TY, Final Year).
+          Add or remove class sections specific to an academic year.
         </p>
       </div>
 
@@ -370,7 +305,10 @@ function CoStructureManager({ departmentId }: { departmentId?: string }) {
   return (
     <div className="space-y-6 animate-in fade-in duration-300 relative">
       <div>
-        <h2 className="text-lg font-semibold text-foreground">Course Outcome (CO) Structure</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground">Course Outcome (CO) Structure</h2>
+          <InfoTooltip content="Select the structure that defines how many Unit Tests (UTs) and Re-UTs will be conducted, along with the question pattern for each. The selected structure controls the UT options in the question paper form and how COs are mapped across the project. To use a different number of UTs (e.g., 4), create a custom structure with as many UTs as needed." />
+        </div>
         <p className="text-[13px] text-muted-foreground mt-1">
           Select or configure the question paper and CO mapping structure for a specific academic year.
         </p>
